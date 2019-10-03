@@ -1,5 +1,7 @@
 package akashihi.osm.parallelpbf;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import crosby.binary.Fileformat;
 import crosby.binary.Osmformat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class ParallelBinaryParser {
@@ -38,12 +41,19 @@ public class ParallelBinaryParser {
     private Consumer<Void> complete;
 
     /**
+     * Input data stream
+     */
+    private final InputStream input;
+
+    /**
      * Reads next blob header length from the current stream position.
      * As blob header length is just 4 bytes in network byte order, this functions makes no
      * checks and will return garbage if called within a wrong stream position
+     *
      * @return length of next block header or 0 if can't be read.
      */
     protected int readBlobHeaderLength() {
+        final int MAX_HEADER_SIZE = 64 * 1024;
         try {
             byte[] blobHeaderLengthBuffer = new byte[4];
             int bytesRead = input.read(blobHeaderLengthBuffer);
@@ -52,6 +62,10 @@ public class ParallelBinaryParser {
             }
             ByteBuffer blobHeaderLengthWrapped = ByteBuffer.wrap(blobHeaderLengthBuffer);
             int blobHeaderLength = blobHeaderLengthWrapped.getInt();
+            if (blobHeaderLength > MAX_HEADER_SIZE) {
+                logger.error("BlobHeader size is too big: {}", blobHeaderLength);
+                return 0;
+            }
             logger.info("Read BlobHeaderLength: {}", blobHeaderLength);
             return blobHeaderLength;
         } catch (IOException e) {
@@ -60,9 +74,52 @@ public class ParallelBinaryParser {
     }
 
     /**
-     * Input data stream
+     * Reads next blob header from the current stream position. Size of the header is
+     * specified in the parameters. As BlobHeader is a protobuf entity, basic validity checking
+     * is made and 0 will be returned in case of failure. Same 0 will be returned if header can't be read fully
+     * or eof is reached.
+     * @param headerLength Number of bytes to read and interpret as BlobHeader
+     * @return Size of the following Blob in bytes or 0 in case of read error.
      */
-    private final InputStream input;
+    protected int readBlobHeader(int headerLength) {
+        final int MAX_BLOB_SIZE = 32 * 1024 *1024;
+        byte[] blobHeaderBuffer = new byte[headerLength];
+        try {
+            int bytesRead = input.read(blobHeaderBuffer);
+            if (bytesRead != headerLength) {
+                return 0;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        Fileformat.BlobHeader header = null;
+        try {
+            header = Fileformat.BlobHeader.parseFrom(blobHeaderBuffer);
+            logger.info("Got BlobHeader with type: {}, data size: {}", header.getType(), header.getDatasize());
+            if (header.getDatasize() > MAX_BLOB_SIZE) {
+                logger.error("Blob size is too big: {}", header.getDatasize());
+                return 0;
+            }
+            return header.getDatasize();
+        } catch (InvalidProtocolBufferException e) {
+            logger.info("Failed to parse BlobHeader: {}", e.getMessage(), e);
+            return 0;
+        }
+    }
+
+    protected Optional<byte[]> readBlob(int blobLength) {
+        byte[] blobBuffer = new byte[blobLength];
+        try {
+            int bytesRead = input.read(blobBuffer);
+            if (bytesRead != blobLength) {
+                return Optional.empty();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return Optional.of(blobBuffer);
+    }
 
     public ParallelBinaryParser(InputStream input, int noThreads) {
         this.input = input;
@@ -89,12 +146,19 @@ public class ParallelBinaryParser {
     }
 
     public void parse() {
+        boolean eof = false;
         do {
-            int blobHeaderLength = readBlobHeaderLength();
-            if (blobHeaderLength > 0) {
-                logger.info("Trying to get header");
-                //int blobLength = readBlobHeader(blobHeaderLength);
+            int headerLength = readBlobHeaderLength();
+            if (headerLength > 0) {
+                int blobLength = readBlobHeader(headerLength);
+                if (blobLength > 0) {
+                    readBlob(blobLength);
+                } else {
+                    eof = true;
+                }
+            } else {
+                eof = true;
             }
-        } while (false);
+        } while (!eof);
     }
 }
