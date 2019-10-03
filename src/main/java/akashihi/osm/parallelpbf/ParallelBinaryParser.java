@@ -45,6 +45,20 @@ public class ParallelBinaryParser {
      */
     private final InputStream input;
 
+    protected Optional<byte[]> readFromStream(int bytesToRead) {
+        byte[] buffer = new byte[bytesToRead];
+        try {
+            int bytesRead = input.read(buffer);
+            if (bytesRead != bytesToRead) {
+                return Optional.empty();
+            }
+        } catch (IOException e) {
+            logger.error("Error reading from the stream: {}", e.getMessage(), e);
+            return Optional.empty();
+        }
+        return Optional.of(buffer);
+    }
+
     /**
      * Reads next blob header length from the current stream position.
      * As blob header length is just 4 bytes in network byte order, this functions makes no
@@ -54,23 +68,19 @@ public class ParallelBinaryParser {
      */
     protected int readBlobHeaderLength() {
         final int MAX_HEADER_SIZE = 64 * 1024;
-        try {
-            byte[] blobHeaderLengthBuffer = new byte[4];
-            int bytesRead = input.read(blobHeaderLengthBuffer);
-            if (bytesRead != blobHeaderLengthBuffer.length) {
-                return 0;
-            }
-            ByteBuffer blobHeaderLengthWrapped = ByteBuffer.wrap(blobHeaderLengthBuffer);
-            int blobHeaderLength = blobHeaderLengthWrapped.getInt();
-            if (blobHeaderLength > MAX_HEADER_SIZE) {
-                logger.error("BlobHeader size is too big: {}", blobHeaderLength);
-                return 0;
-            }
-            logger.info("Read BlobHeaderLength: {}", blobHeaderLength);
-            return blobHeaderLength;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        final int SIZE_FIELD_LENGTH = 4;
+        Optional<byte[]> blobHeaderLengthBuffer = readFromStream(SIZE_FIELD_LENGTH);
+        if (!blobHeaderLengthBuffer.isPresent()) {
+            return 0;
         }
+        ByteBuffer blobHeaderLengthWrapped = ByteBuffer.wrap(blobHeaderLengthBuffer.get());
+        int blobHeaderLength = blobHeaderLengthWrapped.getInt();
+        if (blobHeaderLength > MAX_HEADER_SIZE) {
+            logger.error("BlobHeader size is too big: {}", blobHeaderLength);
+            return 0;
+        }
+        logger.info("Read BlobHeaderLength: {}", blobHeaderLength);
+        return blobHeaderLength;
     }
 
     /**
@@ -83,19 +93,14 @@ public class ParallelBinaryParser {
      */
     protected int readBlobHeader(int headerLength) {
         final int MAX_BLOB_SIZE = 32 * 1024 *1024;
-        byte[] blobHeaderBuffer = new byte[headerLength];
-        try {
-            int bytesRead = input.read(blobHeaderBuffer);
-            if (bytesRead != headerLength) {
-                return 0;
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        Optional<byte[]> blobHeaderBuffer = readFromStream(headerLength);
+        if (!blobHeaderBuffer.isPresent()) {
+            return 0;
         }
 
         Fileformat.BlobHeader header = null;
         try {
-            header = Fileformat.BlobHeader.parseFrom(blobHeaderBuffer);
+            header = Fileformat.BlobHeader.parseFrom(blobHeaderBuffer.get());
             logger.info("Got BlobHeader with type: {}, data size: {}", header.getType(), header.getDatasize());
             if (header.getDatasize() > MAX_BLOB_SIZE) {
                 logger.error("Blob size is too big: {}", header.getDatasize());
@@ -109,16 +114,7 @@ public class ParallelBinaryParser {
     }
 
     protected Optional<byte[]> readBlob(int blobLength) {
-        byte[] blobBuffer = new byte[blobLength];
-        try {
-            int bytesRead = input.read(blobBuffer);
-            if (bytesRead != blobLength) {
-                return Optional.empty();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return Optional.of(blobBuffer);
+        return readFromStream(blobLength);
     }
 
     public ParallelBinaryParser(InputStream input, int noThreads) {
