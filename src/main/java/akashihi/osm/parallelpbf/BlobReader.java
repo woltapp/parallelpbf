@@ -79,22 +79,22 @@ class  BlobReader {
      * @param headerLength Number of bytes to read and interpret as BlobHeader
      * @return Size of the following Blob in bytes or 0 in case of read error.
      */
-    Optional<Integer> readBlobHeader(int headerLength) {
+    Optional<BlobInformation> readBlobHeader(int headerLength) {
         final int MAX_BLOB_SIZE = 32 * 1024 * 1024;
         Optional<byte[]> blobHeaderBuffer = readFromStream(headerLength);
-        Optional<Integer> result = blobHeaderBuffer.flatMap(value -> {
+        Optional<BlobInformation> result = blobHeaderBuffer.flatMap(value -> {
             Fileformat.BlobHeader header;
             try {
                 header = Fileformat.BlobHeader.parseFrom(blobHeaderBuffer.get());
                 logger.trace("Got BlobHeader with type: {}, data size: {}", header.getType(), header.getDatasize());
-                return Optional.of(header.getDatasize());
+                return Optional.of(new BlobInformation(header.getDatasize(), header.getType()));
             } catch (InvalidProtocolBufferException e) {
                 logger.error("Failed to parse BlobHeader: {}", e.getMessage(), e);
                 return Optional.empty();
             }
         });
         return result.flatMap(value -> {
-            if (value > MAX_BLOB_SIZE) {
+            if (value.getSize() > MAX_BLOB_SIZE) {
                 logger.warn("Blob size is too big: {}", value);
                 return Optional.empty();
             } else {
