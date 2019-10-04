@@ -1,5 +1,7 @@
 package akashihi.osm.parallelpbf;
 
+import akashihi.osm.parallelpbf.entity.BoundBox;
+import akashihi.osm.parallelpbf.entity.Header;
 import crosby.binary.Osmformat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,12 +32,17 @@ public final class ParallelBinaryParser {
     /**
      * Header processing callback. Must be reentrant.
      */
-    private Consumer<List<Osmformat.HeaderBlock>> parseHeader;
+    private Consumer<Header> parseHeader;
+
+    /**
+     * Header processing callback. Must be reentrant.
+     */
+    private Consumer<BoundBox> parseBoundBox;
 
     /**
      * Callback that will be called, when all blocks are parsed.
      */
-    private Consumer<Void> complete;
+    private Runnable complete;
 
     private final ExecutorService executor;
     private final Semaphore tasksLimiter;
@@ -44,7 +51,7 @@ public final class ParallelBinaryParser {
     private Optional<OSMReader> makeReaderForBlob(byte[] blob, BlobInformation information) {
         switch (information.getType()) {
             case "OSMHeader":
-                return Optional.of(new OSMHeaderReader(blob, tasksLimiter));
+                return Optional.of(new OSMHeaderReader(blob, tasksLimiter, parseHeader, parseBoundBox));
             case "OSMData":
                 return Optional.of(new OSMDataReader(blob, tasksLimiter));
             default:
@@ -98,11 +105,15 @@ public final class ParallelBinaryParser {
         this.parseWays = parseWays;
     }
 
-    public void setHeaderCallback(Consumer<List<Osmformat.HeaderBlock>> parseHeader) {
+    public void setHeaderCallback(Consumer<Header> parseHeader) {
         this.parseHeader = parseHeader;
     }
 
-    public void setCompleteCallback(Consumer<Void> complete) {
+    public void setBoundBoxCallback(Consumer<BoundBox> parseBoundBox) {
+        this.parseBoundBox = parseBoundBox;
+    }
+
+    public void setCompleteCallback(Runnable complete) {
         this.complete = complete;
     }
 
@@ -112,5 +123,8 @@ public final class ParallelBinaryParser {
             blob = reader.readBlobHeaderLength().flatMap(reader::readBlobHeader).flatMap(this::processDataBlob);
         } while (blob.isPresent());
         executor.shutdown();
+        if (complete != null) {
+            complete.run();
+        }
     }
 }

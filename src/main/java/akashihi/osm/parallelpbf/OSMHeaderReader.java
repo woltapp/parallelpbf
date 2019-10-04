@@ -10,12 +10,25 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
+import java.util.function.Consumer;
 
 public final class OSMHeaderReader extends OSMReader {
     private static Logger logger = LoggerFactory.getLogger(OSMHeaderReader.class);
 
-    OSMHeaderReader(byte[] blob, Semaphore tasksLimiter) {
+    /**
+     * Header processing callback. Must be reentrant.
+     */
+    private final Consumer<Header> parseHeader;
+
+    /**
+     * Header processing callback. Must be reentrant.
+     */
+    private final Consumer<BoundBox> parseBoundBox;
+
+    OSMHeaderReader(byte[] blob, Semaphore tasksLimiter, Consumer<Header> parseHeader, Consumer<BoundBox> parseBoundBox) {
         super(blob, tasksLimiter);
+        this.parseHeader = parseHeader;
+        this.parseBoundBox = parseBoundBox;
     }
 
     private boolean checkRequiredFeatures(List<String> features) {
@@ -50,6 +63,9 @@ public final class OSMHeaderReader extends OSMReader {
             header.setSource(headerData.getSource());
         }
         logger.debug("Header: {}", header.toString());
+        if (parseHeader != null) {
+            parseHeader.accept(header);
+        }
 
         if (headerData.hasBbox()) {
             BoundBox bbox = new BoundBox(headerData.getBbox().getLeft() / 1e9,
@@ -57,6 +73,9 @@ public final class OSMHeaderReader extends OSMReader {
                     headerData.getBbox().getRight() / 1e9,
                     headerData.getBbox().getBottom() / 1e9);
             logger.debug("Bounding box: {}", bbox.toString());
+            if (parseBoundBox != null) {
+                parseBoundBox.accept(bbox);
+            }
         }
     }
 }

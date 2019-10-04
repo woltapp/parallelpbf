@@ -1,6 +1,5 @@
 package akashihi.osm.parallelpbf;
 
-import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import crosby.binary.Fileformat;
 import org.slf4j.Logger;
