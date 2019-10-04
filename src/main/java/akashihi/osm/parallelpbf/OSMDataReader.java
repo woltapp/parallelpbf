@@ -13,7 +13,7 @@ public class OSMDataReader extends OSMReader {
     }
 
     @Override
-    protected void read() {
+    protected void read(byte[] message) {
         logger.trace("Parsing OSM data");
     }
 }
