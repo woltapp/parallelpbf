@@ -33,10 +33,60 @@ public class OSMDataReader extends OSMReader {
     private void parseWays(List<Osmformat.Way> waysList) {
     }
 
-    private void parseDenseNodes(Osmformat.DenseNodes dense) {
+    private void parseDenseNodes(Osmformat.DenseNodes nodes, int granularity, long lat_offset, long lon_offset, int date_granularity, Osmformat.StringTable strings) {
+        int keyval_position = 0;
+        long id = 0;
+        double latitude = 0;
+        double longitude = 0;
+
+        long timestamp = 0;
+        long changeset = 0;
+        int uid = 0;
+        int user_sid = 0;
+        for(int indx = 0; indx < nodes.getIdCount(); indx++) {
+            id += nodes.getId(indx);
+            latitude += .000000001 * (lat_offset + (granularity * nodes.getLat(indx)));
+            longitude += .000000001 * (lon_offset + (granularity * nodes.getLon(indx)));
+
+            Node node = new Node(id, latitude, longitude);
+            if (nodes.getKeysValsCount() > 0) {
+                while(true) {
+                    int key_indx = nodes.getKeysVals(keyval_position);
+                    ++keyval_position;
+                    if (key_indx == 0) {
+                        break;
+                    }
+                    int val_indx = nodes.getKeysVals(keyval_position);
+                    ++keyval_position;
+                    String key = strings.getS(key_indx).toStringUtf8();
+                    String value = strings.getS(val_indx).toStringUtf8();
+                    node.getTags().put(key, value);
+                }
+            }
+            if (nodes.hasDenseinfo()) {
+                Osmformat.DenseInfo infoMessage = nodes.getDenseinfo();
+                uid += infoMessage.getUid(indx);
+                user_sid += infoMessage.getUserSid(indx);
+                String username = strings.getS(user_sid).toStringUtf8();
+                changeset += infoMessage.getChangeset(indx);
+                timestamp += infoMessage.getTimestamp(indx);
+                int version = infoMessage.getVersion(indx);
+                boolean visible;
+                if (infoMessage.getVisibleCount() > 0) {
+                    visible = infoMessage.getVisible(indx);
+                } else {
+                    visible = true;
+                }
+                NodeInfo info = new NodeInfo(uid, username, version, timestamp * date_granularity, changeset, visible);
+                node.setInfo(info);
+            }
+            logger.debug(node.toString());
+            parseNodes.accept(node);
+
+        }
     }
 
-    private Consumer<Osmformat.Node> makeNodeParser(int granularity, long lat_offset, long lon_offset, Osmformat.StringTable strings) {
+    private Consumer<Osmformat.Node> makeNodeParser(int granularity, long lat_offset, long lon_offset, int date_granularity, Osmformat.StringTable strings) {
         return (nodeMessage) -> {
             double latitude = .000000001 * (lat_offset + (granularity * nodeMessage.getLat()));
             double longitude = .000000001 * (lon_offset + (granularity * nodeMessage.getLon()));
@@ -48,7 +98,8 @@ public class OSMDataReader extends OSMReader {
             }
             if (nodeMessage.hasInfo()) {
                 Osmformat.Info infoMessage = nodeMessage.getInfo();
-                NodeInfo info = new NodeInfo(infoMessage.getUid(), infoMessage.getUserSid(), infoMessage.getVersion(), infoMessage.getTimestamp(), infoMessage.getChangeset(), infoMessage.getVisible());
+                String username = strings.getS(infoMessage.getUserSid()).toStringUtf8();
+                NodeInfo info = new NodeInfo(infoMessage.getUid(), username, infoMessage.getVersion(), infoMessage.getTimestamp(), infoMessage.getChangeset(), infoMessage.getVisible());
                 node.setInfo(info);
             }
             logger.debug(node.toString());
@@ -68,10 +119,10 @@ public class OSMDataReader extends OSMReader {
         List<Osmformat.PrimitiveGroup> groups = primitives.getPrimitivegroupList();
         for (Osmformat.PrimitiveGroup group: groups) {
             if (parseNodes != null) {
-                Consumer<Osmformat.Node> nodeParser = makeNodeParser(primitives.getGranularity(), primitives.getLatOffset(), primitives.getLonOffset(), primitives.getStringtable());
+                Consumer<Osmformat.Node> nodeParser = makeNodeParser(primitives.getGranularity(), primitives.getLatOffset(), primitives.getLonOffset(), primitives.getDateGranularity(), primitives.getStringtable());
                 group.getNodesList().forEach(nodeParser);
                 if (group.hasDense()) {
-                    parseDenseNodes(group.getDense());
+                    parseDenseNodes(group.getDense(), primitives.getGranularity(), primitives.getLatOffset(), primitives.getLonOffset(), primitives.getDateGranularity(), primitives.getStringtable());
                 }
             }
             parseWays(group.getWaysList());

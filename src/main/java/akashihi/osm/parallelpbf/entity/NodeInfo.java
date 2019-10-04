@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class NodeInfo {
     final int uid;
-    final int userSid;
+    final String username;
     final int version;
     final long timestamp;
     final long changeset;
