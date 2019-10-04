@@ -25,7 +25,7 @@ public abstract class OSMReader implements Runnable {
     public void run() {
         try {
             Fileformat.Blob blobData = Fileformat.Blob.parseFrom(blob);
-            byte[] payload = null;
+            byte[] payload;
             if (blobData.hasZlibData()) {
                 Inflater decompresser = new Inflater();
                 decompresser.setInput(blobData.getZlibData().toByteArray());
@@ -37,6 +37,8 @@ public abstract class OSMReader implements Runnable {
                 }
             } else if (blobData.hasRaw()) {
                 payload = blobData.getRaw().toByteArray();
+            } else {
+                throw new RuntimeException("Only RAW or ZLib blob formats are supported");
             }
             this.read(payload);
         } catch (InvalidProtocolBufferException | DataFormatException e) {
