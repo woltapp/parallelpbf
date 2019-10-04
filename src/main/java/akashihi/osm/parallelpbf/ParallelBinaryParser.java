@@ -7,10 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 public final class ParallelBinaryParser {
@@ -56,7 +53,16 @@ public final class ParallelBinaryParser {
             throw new RuntimeException(e);
         }
         try {
-            executor.execute(tasksLimiter::release);
+            Future result = executor.submit(() -> {
+                tasksLimiter.release();
+            });
+            try {
+                result.get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
         }catch (RejectedExecutionException e) {
             tasksLimiter.release();
             logger.error("Failed to start processing of blob");
@@ -90,9 +96,13 @@ public final class ParallelBinaryParser {
     }
 
     public void parse() {
-        Optional<byte[]> blob = Optional.empty();
+        Optional<byte[]> blob;
         do {
             blob = reader.readBlobHeaderLength().flatMap(reader::readBlobHeader).flatMap(blobinfo -> reader.readBlob(blobinfo.getSize()));
+            if (blob.isPresent()) {
+                processDataBlob(blob.get(), "test");
+            }
         } while (blob.isPresent());
+        executor.shutdown();
     }
 }
