@@ -5,20 +5,15 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Semaphore;
 
-public class OSMHeaderReader implements Runnable {
+public class OSMHeaderReader extends OSMReader {
     private static Logger logger = LoggerFactory.getLogger(OSMHeaderReader.class);
 
-    private final byte[] blob;
-    private final Semaphore tasksLimiter;
-
-    public OSMHeaderReader(byte[] blob, Semaphore tasksLimiter) {
-        this.blob = blob;
-        this.tasksLimiter = tasksLimiter;
+    OSMHeaderReader(byte[] blob, Semaphore tasksLimiter) {
+        super(blob, tasksLimiter);
     }
 
     @Override
-    public void run() {
+    protected void read() {
         logger.trace("Parsing OSM header");
-        tasksLimiter.release();
     }
 }
