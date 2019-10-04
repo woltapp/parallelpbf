@@ -2,6 +2,7 @@ package akashihi.osm.parallelpbf;
 
 import akashihi.osm.parallelpbf.entity.BoundBox;
 import akashihi.osm.parallelpbf.entity.Header;
+import akashihi.osm.parallelpbf.entity.Node;
 import crosby.binary.Osmformat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,7 @@ public final class ParallelBinaryParser {
     /**
      * Nodes processing callback. Must be reentrant.
      */
-    private Consumer<List<Osmformat.Node>> parseNodes;
+    private Consumer<Node> parseNodes;
 
     /**
      * Ways processing callback. Must be reentrant.
@@ -53,7 +54,7 @@ public final class ParallelBinaryParser {
             case "OSMHeader":
                 return Optional.of(new OSMHeaderReader(blob, tasksLimiter, parseHeader, parseBoundBox));
             case "OSMData":
-                return Optional.of(new OSMDataReader(blob, tasksLimiter));
+                return Optional.of(new OSMDataReader(blob, tasksLimiter, parseNodes));
             default:
                 return Optional.empty();
         }
@@ -97,7 +98,7 @@ public final class ParallelBinaryParser {
         this.parseRelations = parseRelations;
     }
 
-    public void setNodesCallback(Consumer<List<Osmformat.Node>> parseNodes) {
+    public void setNodesCallback(Consumer<Node> parseNodes) {
         this.parseNodes = parseNodes;
     }
 
