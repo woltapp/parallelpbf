@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Data
-public abstract class OsmEntity {
+abstract class OsmEntity {
     final long id;
     Map<String, String> tags = new HashMap<>();
     Info info;

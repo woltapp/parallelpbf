@@ -8,7 +8,9 @@ import crosby.binary.Osmformat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 
@@ -31,6 +33,16 @@ public class OSMDataReader extends OSMReader {
         this.parseWays = parseWays;
     }
 
+    private Map<String, String> parseTags(List<Integer> keys, List<Integer> values, Osmformat.StringTable strings) {
+        HashMap<String, String> result = new HashMap<>();
+        for(int indx = 0; indx < keys.size(); ++indx) {
+            String key = strings.getS(keys.get(indx)).toStringUtf8();
+            String value = strings.getS(values.get(indx)).toStringUtf8();
+            result.put(key, value);
+        }
+        return result;
+    }
+
     private void parseChangesets(List<Osmformat.ChangeSet> changesetsList) {
     }
 
@@ -41,11 +53,7 @@ public class OSMDataReader extends OSMReader {
         return (wayMessage) -> {
             long nodeId = 0;
             Way way = new Way(wayMessage.getId());
-            for(int indx = 0; indx < wayMessage.getKeysCount(); ++indx) {
-                String key = strings.getS(wayMessage.getKeys(indx)).toStringUtf8();
-                String value = strings.getS(wayMessage.getVals(indx)).toStringUtf8();
-                way.getTags().put(key, value);
-            }
+            way.setTags(parseTags(wayMessage.getKeysList(), wayMessage.getValsList(), strings));
             if (wayMessage.hasInfo()) {
                 Osmformat.Info infoMessage = wayMessage.getInfo();
                 String username = strings.getS(infoMessage.getUserSid()).toStringUtf8();
@@ -119,11 +127,7 @@ public class OSMDataReader extends OSMReader {
             double latitude = .000000001 * (lat_offset + (granularity * nodeMessage.getLat()));
             double longitude = .000000001 * (lon_offset + (granularity * nodeMessage.getLon()));
             Node node = new Node(nodeMessage.getId(), latitude, longitude);
-            for(int indx = 0; indx < nodeMessage.getKeysCount(); ++indx) {
-                String key = strings.getS(nodeMessage.getKeys(indx)).toStringUtf8();
-                String value = strings.getS(nodeMessage.getVals(indx)).toStringUtf8();
-                node.getTags().put(key, value);
-            }
+            node.setTags(parseTags(nodeMessage.getKeysList(), nodeMessage.getValsList(), strings));
             if (nodeMessage.hasInfo()) {
                 Osmformat.Info infoMessage = nodeMessage.getInfo();
                 String username = strings.getS(infoMessage.getUserSid()).toStringUtf8();
