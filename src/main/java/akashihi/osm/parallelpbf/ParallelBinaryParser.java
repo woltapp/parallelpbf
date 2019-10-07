@@ -14,6 +14,12 @@ import java.util.stream.Collectors;
 
 public final class ParallelBinaryParser {
     private static Logger logger = LoggerFactory.getLogger(ParallelBinaryParser.class);
+
+    /**
+     * Changeset processing callback. Must be reentrant.
+     */
+    private Consumer<Long> parseChangesets;
+
     /**
      * Relations processing callback. Must be reentrant.
      */
@@ -56,7 +62,7 @@ public final class ParallelBinaryParser {
             case "OSMHeader":
                 return Optional.of(new OSMHeaderReader(blob, tasksLimiter, parseHeader, parseBoundBox));
             case "OSMData":
-                return Optional.of(new OSMDataReader(blob, tasksLimiter, parseNodes, parseWays, parseRelations));
+                return Optional.of(new OSMDataReader(blob, tasksLimiter, parseNodes, parseWays, parseRelations, parseChangesets));
             default:
                 return Optional.empty();
         }
@@ -96,6 +102,10 @@ public final class ParallelBinaryParser {
         reader = new BlobReader(input);
         threads = noThreads;
         tasksLimiter = new Semaphore(noThreads);
+    }
+
+    public void setChangesetsCallback(Consumer<Long> changesetsCallback) {
+        this.parseChangesets = changesetsCallback;
     }
 
     public void setRelationsCallback(Consumer<Relation> parseRelations) {

@@ -16,6 +16,11 @@ public class OSMDataReader extends OSMReader {
     private static Logger logger = LoggerFactory.getLogger(OSMDataReader.class);
 
     /**
+     * Changeset processing callback. Must be reentrant.
+     */
+    final private Consumer<Long> parseChangesets;
+
+    /**
      * Nodes processing callback. Must be reentrant.
      */
     final private Consumer<Node> parseNodes;
@@ -30,11 +35,12 @@ public class OSMDataReader extends OSMReader {
      */
     final private Consumer<Relation> parseRelations;
 
-    OSMDataReader(byte[] blob, Semaphore tasksLimiter, Consumer<Node> parseNodes, Consumer<Way> parseWays, Consumer<Relation> parseRelations) {
+    OSMDataReader(byte[] blob, Semaphore tasksLimiter, Consumer<Node> parseNodes, Consumer<Way> parseWays, Consumer<Relation> parseRelations, Consumer<Long> parseChangesets) {
         super(blob, tasksLimiter);
         this.parseNodes = parseNodes;
         this.parseWays = parseWays;
         this.parseRelations = parseRelations;
+        this.parseChangesets = parseChangesets;
     }
 
     private Map<String, String> parseTags(List<Integer> keys, List<Integer> values, Osmformat.StringTable strings) {
@@ -72,9 +78,6 @@ public class OSMDataReader extends OSMReader {
             return new Info(infoMessage.getUid(), username, infoMessage.getVersion(), infoMessage.getTimestamp(), infoMessage.getChangeset(), infoMessage.getVisible());
         }
         return null;
-    }
-
-    private void parseChangesets(List<Osmformat.ChangeSet> changesetsList) {
     }
 
     private Consumer<Osmformat.Relation> makeRelationParser(Osmformat.StringTable strings) {
@@ -202,7 +205,13 @@ public class OSMDataReader extends OSMReader {
                 Consumer<Osmformat.Relation> relationParser = makeRelationParser(primitives.getStringtable());
                 group.getRelationsList().forEach(relationParser);
             }
-            parseChangesets(group.getChangesetsList());
+            if (parseChangesets != null) {
+                group.getChangesetsList().forEach(changeMessage -> {
+                    long id = changeMessage.getId();
+                    logger.debug("ChangeSet id: {}", id);
+                    parseChangesets.accept(id);
+                });
+            }
         }
     }
 }

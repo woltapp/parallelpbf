@@ -14,7 +14,8 @@ public class ParalelBinaryParserExample {
     private final StringBuilder output = new StringBuilder();
     private AtomicInteger nodesCounter = new AtomicInteger();
     private AtomicInteger waysCounter = new AtomicInteger();
-    private AtomicInteger relationssCounter = new AtomicInteger();
+    private AtomicInteger relationsCounter = new AtomicInteger();
+    private AtomicInteger changesetsCounter = new AtomicInteger();
 
     private void processHeader(Header header) {
         synchronized (output) {
@@ -39,7 +40,11 @@ public class ParalelBinaryParserExample {
     }
 
     private void processRelations(Relation way) {
-        relationssCounter.incrementAndGet();
+        relationsCounter.incrementAndGet();
+    }
+
+    private void processChangesets(Long id) {
+        changesetsCounter.incrementAndGet();
     }
 
     private void printOnCompletions() {
@@ -52,7 +57,11 @@ public class ParalelBinaryParserExample {
         output.append("\n");
 
         output.append("Relations count: ");
-        output.append(relationssCounter.get());
+        output.append(relationsCounter.get());
+        output.append("\n");
+
+        output.append("Changesets count: ");
+        output.append(changesetsCounter.get());
         output.append("\n");
 
         System.out.println("Reading results:");
