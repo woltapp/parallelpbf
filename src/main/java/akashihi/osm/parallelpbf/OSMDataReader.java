@@ -43,6 +43,27 @@ public class OSMDataReader extends OSMReader {
         return result;
     }
 
+    private <M> Info parseInfo(M message, Osmformat.StringTable strings) {
+        Osmformat.Info infoMessage = null;
+        if (message instanceof Osmformat.Node) {
+            Osmformat.Node nodeMessage = (Osmformat.Node)message;
+            if (nodeMessage.hasInfo()) {
+                infoMessage = nodeMessage.getInfo();
+            }
+        }
+        if (message instanceof Osmformat.Way) {
+            Osmformat.Way nodeMessage = (Osmformat.Way)message;
+            if (nodeMessage.hasInfo()) {
+                infoMessage = nodeMessage.getInfo();
+            }
+        }
+        if (infoMessage != null) {
+            String username = strings.getS(infoMessage.getUserSid()).toStringUtf8();
+            return new Info(infoMessage.getUid(), username, infoMessage.getVersion(), infoMessage.getTimestamp(), infoMessage.getChangeset(), infoMessage.getVisible());
+        }
+        return null;
+    }
+
     private void parseChangesets(List<Osmformat.ChangeSet> changesetsList) {
     }
 
@@ -54,12 +75,7 @@ public class OSMDataReader extends OSMReader {
             long nodeId = 0;
             Way way = new Way(wayMessage.getId());
             way.setTags(parseTags(wayMessage.getKeysList(), wayMessage.getValsList(), strings));
-            if (wayMessage.hasInfo()) {
-                Osmformat.Info infoMessage = wayMessage.getInfo();
-                String username = strings.getS(infoMessage.getUserSid()).toStringUtf8();
-                Info info = new Info(infoMessage.getUid(), username, infoMessage.getVersion(), infoMessage.getTimestamp(), infoMessage.getChangeset(), infoMessage.getVisible());
-                way.setInfo(info);
-            }
+            way.setInfo(parseInfo(wayMessage, strings));
             for(Long node : wayMessage.getRefsList()) {
                 nodeId+=node;
                 way.getNodes().add(nodeId);
@@ -128,12 +144,7 @@ public class OSMDataReader extends OSMReader {
             double longitude = .000000001 * (lon_offset + (granularity * nodeMessage.getLon()));
             Node node = new Node(nodeMessage.getId(), latitude, longitude);
             node.setTags(parseTags(nodeMessage.getKeysList(), nodeMessage.getValsList(), strings));
-            if (nodeMessage.hasInfo()) {
-                Osmformat.Info infoMessage = nodeMessage.getInfo();
-                String username = strings.getS(infoMessage.getUserSid()).toStringUtf8();
-                Info info = new Info(infoMessage.getUid(), username, infoMessage.getVersion(), infoMessage.getTimestamp(), infoMessage.getChangeset(), infoMessage.getVisible());
-                node.setInfo(info);
-            }
+            node.setInfo(parseInfo(nodeMessage, strings));
             logger.debug(node.toString());
             parseNodes.accept(node);
         };
