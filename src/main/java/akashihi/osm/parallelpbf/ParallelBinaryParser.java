@@ -3,6 +3,7 @@ package akashihi.osm.parallelpbf;
 import akashihi.osm.parallelpbf.entity.BoundBox;
 import akashihi.osm.parallelpbf.entity.Header;
 import akashihi.osm.parallelpbf.entity.Node;
+import akashihi.osm.parallelpbf.entity.Way;
 import crosby.binary.Osmformat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,7 @@ public final class ParallelBinaryParser {
     /**
      * Ways processing callback. Must be reentrant.
      */
-    private Consumer<List<Osmformat.Way>> parseWays;
+    private Consumer<Way> parseWays;
 
     /**
      * Header processing callback. Must be reentrant.
@@ -54,7 +55,7 @@ public final class ParallelBinaryParser {
             case "OSMHeader":
                 return Optional.of(new OSMHeaderReader(blob, tasksLimiter, parseHeader, parseBoundBox));
             case "OSMData":
-                return Optional.of(new OSMDataReader(blob, tasksLimiter, parseNodes));
+                return Optional.of(new OSMDataReader(blob, tasksLimiter, parseNodes, parseWays));
             default:
                 return Optional.empty();
         }
@@ -80,7 +81,9 @@ public final class ParallelBinaryParser {
      * Processses blob with osm data asynchronously.
      *
      * @param information Blob's size and type
-     * @return
+     * @return Processing results in form of Optional Future. Empty Optional
+     *         means, that processing hasn't started, while Future can be
+     *         awaited till end of the blob processing.
      */
     protected Optional<? extends Future<?>> processDataBlob(BlobInformation information) {
         return reader.readBlob(information.getSize())
@@ -102,7 +105,7 @@ public final class ParallelBinaryParser {
         this.parseNodes = parseNodes;
     }
 
-    public void setsetWaysCallback(Consumer<List<Osmformat.Way>> parseWays) {
+    public void setsetWaysCallback(Consumer<Way> parseWays) {
         this.parseWays = parseWays;
     }
 

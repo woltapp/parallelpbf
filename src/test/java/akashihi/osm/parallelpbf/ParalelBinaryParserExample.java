@@ -3,6 +3,7 @@ package akashihi.osm.parallelpbf;
 import akashihi.osm.parallelpbf.entity.BoundBox;
 import akashihi.osm.parallelpbf.entity.Header;
 import akashihi.osm.parallelpbf.entity.Node;
+import akashihi.osm.parallelpbf.entity.Way;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ public class ParalelBinaryParserExample {
 
     private final StringBuilder output = new StringBuilder();
     private AtomicInteger nodesCounter = new AtomicInteger();
+    private AtomicInteger waysCounter = new AtomicInteger();
 
     private void processHeader(Header header) {
         synchronized (output) {
@@ -34,9 +36,17 @@ public class ParalelBinaryParserExample {
         nodesCounter.incrementAndGet();
     }
 
+    private void processWays(Way way) {
+        waysCounter.incrementAndGet();
+    }
+
     private void printOnCompletions() {
         output.append("Node count: ");
         output.append(nodesCounter.get());
+        output.append("\n");
+
+        output.append("Way count: ");
+        output.append(waysCounter.get());
         output.append("\n");
 
         System.out.println("Reading results:");
@@ -54,6 +64,7 @@ public class ParalelBinaryParserExample {
         parser.setBoundBoxCallback(this::processBoundingBox);
         parser.setCompleteCallback(this::printOnCompletions);
         parser.setNodesCallback(this::processNodes);
+        parser.setsetWaysCallback(this::processWays);
 
         parser.parse();
     }

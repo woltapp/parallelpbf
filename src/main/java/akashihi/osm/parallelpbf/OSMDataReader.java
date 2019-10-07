@@ -20,9 +20,15 @@ public class OSMDataReader extends OSMReader {
      */
     final private Consumer<Node> parseNodes;
 
-    OSMDataReader(byte[] blob, Semaphore tasksLimiter, Consumer<Node> parseNodes) {
+    /**
+     * Ways processing callback. Must be reentrant.
+     */
+    final private Consumer<Way> parseWays;
+
+    OSMDataReader(byte[] blob, Semaphore tasksLimiter, Consumer<Node> parseNodes, Consumer<Way> parseWays) {
         super(blob, tasksLimiter);
         this.parseNodes = parseNodes;
+        this.parseWays = parseWays;
     }
 
     private void parseChangesets(List<Osmformat.ChangeSet> changesetsList) {
@@ -51,6 +57,7 @@ public class OSMDataReader extends OSMReader {
                 way.getNodes().add(nodeId);
             }
             logger.debug(way.toString());
+            parseWays.accept(way);
         };
     }
 
@@ -146,8 +153,10 @@ public class OSMDataReader extends OSMReader {
                     parseDenseNodes(group.getDense(), primitives.getGranularity(), primitives.getLatOffset(), primitives.getLonOffset(), primitives.getDateGranularity(), primitives.getStringtable());
                 }
             }
-            Consumer<Osmformat.Way> wayParser = makeWayParser(primitives.getStringtable());
-            group.getWaysList().forEach(wayParser);
+            if (parseWays != null) {
+                Consumer<Osmformat.Way> wayParser = makeWayParser(primitives.getStringtable());
+                group.getWaysList().forEach(wayParser);
+            }
             parseRelations(group.getRelationsList());
             parseChangesets(group.getChangesetsList());
         }
