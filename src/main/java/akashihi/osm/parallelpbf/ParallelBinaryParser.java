@@ -1,15 +1,10 @@
 package akashihi.osm.parallelpbf;
 
-import akashihi.osm.parallelpbf.entity.BoundBox;
-import akashihi.osm.parallelpbf.entity.Header;
-import akashihi.osm.parallelpbf.entity.Node;
-import akashihi.osm.parallelpbf.entity.Way;
-import crosby.binary.Osmformat;
+import akashihi.osm.parallelpbf.entity.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -19,7 +14,7 @@ public final class ParallelBinaryParser {
     /**
      * Relations processing callback. Must be reentrant.
      */
-    private Consumer<List<Osmformat.Relation>> parseRelations;
+    private Consumer<Relation> parseRelations;
 
     /**
      * Nodes processing callback. Must be reentrant.
@@ -55,7 +50,7 @@ public final class ParallelBinaryParser {
             case "OSMHeader":
                 return Optional.of(new OSMHeaderReader(blob, tasksLimiter, parseHeader, parseBoundBox));
             case "OSMData":
-                return Optional.of(new OSMDataReader(blob, tasksLimiter, parseNodes, parseWays));
+                return Optional.of(new OSMDataReader(blob, tasksLimiter, parseNodes, parseWays, parseRelations));
             default:
                 return Optional.empty();
         }
@@ -97,7 +92,7 @@ public final class ParallelBinaryParser {
         tasksLimiter = new Semaphore(noThreads);
     }
 
-    public void setRelationsCallback(Consumer<List<Osmformat.Relation>> parseRelations) {
+    public void setRelationsCallback(Consumer<Relation> parseRelations) {
         this.parseRelations = parseRelations;
     }
 

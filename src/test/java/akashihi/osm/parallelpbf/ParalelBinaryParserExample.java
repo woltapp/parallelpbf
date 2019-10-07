@@ -1,9 +1,6 @@
 package akashihi.osm.parallelpbf;
 
-import akashihi.osm.parallelpbf.entity.BoundBox;
-import akashihi.osm.parallelpbf.entity.Header;
-import akashihi.osm.parallelpbf.entity.Node;
-import akashihi.osm.parallelpbf.entity.Way;
+import akashihi.osm.parallelpbf.entity.*;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +14,7 @@ public class ParalelBinaryParserExample {
     private final StringBuilder output = new StringBuilder();
     private AtomicInteger nodesCounter = new AtomicInteger();
     private AtomicInteger waysCounter = new AtomicInteger();
+    private AtomicInteger relationssCounter = new AtomicInteger();
 
     private void processHeader(Header header) {
         synchronized (output) {
@@ -40,6 +38,10 @@ public class ParalelBinaryParserExample {
         waysCounter.incrementAndGet();
     }
 
+    private void processRelations(Relation way) {
+        relationssCounter.incrementAndGet();
+    }
+
     private void printOnCompletions() {
         output.append("Node count: ");
         output.append(nodesCounter.get());
@@ -47,6 +49,10 @@ public class ParalelBinaryParserExample {
 
         output.append("Way count: ");
         output.append(waysCounter.get());
+        output.append("\n");
+
+        output.append("Relations count: ");
+        output.append(relationssCounter.get());
         output.append("\n");
 
         System.out.println("Reading results:");
@@ -65,6 +71,7 @@ public class ParalelBinaryParserExample {
         parser.setCompleteCallback(this::printOnCompletions);
         parser.setNodesCallback(this::processNodes);
         parser.setsetWaysCallback(this::processWays);
+        parser.setRelationsCallback(this::processRelations);
 
         parser.parse();
     }

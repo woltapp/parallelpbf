@@ -1,8 +1,6 @@
 package akashihi.osm.parallelpbf;
 
-import akashihi.osm.parallelpbf.entity.Node;
-import akashihi.osm.parallelpbf.entity.Info;
-import akashihi.osm.parallelpbf.entity.Way;
+import akashihi.osm.parallelpbf.entity.*;
 import com.google.protobuf.InvalidProtocolBufferException;
 import crosby.binary.Osmformat;
 import org.slf4j.Logger;
@@ -27,10 +25,16 @@ public class OSMDataReader extends OSMReader {
      */
     final private Consumer<Way> parseWays;
 
-    OSMDataReader(byte[] blob, Semaphore tasksLimiter, Consumer<Node> parseNodes, Consumer<Way> parseWays) {
+    /**
+     * Relations processing callback. Must be reentrant.
+     */
+    final private Consumer<Relation> parseRelations;
+
+    OSMDataReader(byte[] blob, Semaphore tasksLimiter, Consumer<Node> parseNodes, Consumer<Way> parseWays, Consumer<Relation> parseRelations) {
         super(blob, tasksLimiter);
         this.parseNodes = parseNodes;
         this.parseWays = parseWays;
+        this.parseRelations = parseRelations;
     }
 
     private Map<String, String> parseTags(List<Integer> keys, List<Integer> values, Osmformat.StringTable strings) {
@@ -52,9 +56,15 @@ public class OSMDataReader extends OSMReader {
             }
         }
         if (message instanceof Osmformat.Way) {
-            Osmformat.Way nodeMessage = (Osmformat.Way)message;
-            if (nodeMessage.hasInfo()) {
-                infoMessage = nodeMessage.getInfo();
+            Osmformat.Way wayMessage = (Osmformat.Way)message;
+            if (wayMessage.hasInfo()) {
+                infoMessage = wayMessage.getInfo();
+            }
+        }
+        if (message instanceof Osmformat.Relation) {
+            Osmformat.Relation relMessage = (Osmformat.Relation)message;
+            if (relMessage.hasInfo()) {
+                infoMessage = relMessage.getInfo();
             }
         }
         if (infoMessage != null) {
@@ -67,7 +77,23 @@ public class OSMDataReader extends OSMReader {
     private void parseChangesets(List<Osmformat.ChangeSet> changesetsList) {
     }
 
-    private void parseRelations(List<Osmformat.Relation> relationsList) {
+    private Consumer<Osmformat.Relation> makeRelationParser(Osmformat.StringTable strings) {
+        return (relationMessage) -> {
+            long member_id=0;
+            Relation relation = new Relation(relationMessage.getId());
+            relation.setTags(parseTags(relationMessage.getKeysList(), relationMessage.getValsList(), strings));
+            relation.setInfo(parseInfo(relationMessage, strings));
+            for(int indx=0; indx<relationMessage.getRolesSidCount(); ++indx) {
+                String role = strings.getS(relationMessage.getRolesSid(indx)).toStringUtf8();
+                member_id += relationMessage.getMemids(indx);
+                RelationMember.Type type = RelationMember.Type.get(relationMessage.getTypes(indx).getNumber());
+                RelationMember member = new RelationMember(member_id, role, type);
+                relation.getMembers().add(member);
+            }
+
+            logger.debug(relation.toString());
+            parseRelations.accept(relation);
+        };
     }
 
     private Consumer<Osmformat.Way> makeWayParser(Osmformat.StringTable strings) {
@@ -172,7 +198,10 @@ public class OSMDataReader extends OSMReader {
                 Consumer<Osmformat.Way> wayParser = makeWayParser(primitives.getStringtable());
                 group.getWaysList().forEach(wayParser);
             }
-            parseRelations(group.getRelationsList());
+            if (parseRelations != null) {
+                Consumer<Osmformat.Relation> relationParser = makeRelationParser(primitives.getStringtable());
+                group.getRelationsList().forEach(relationParser);
+            }
             parseChangesets(group.getChangesetsList());
         }
     }
