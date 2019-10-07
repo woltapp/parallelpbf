@@ -1,53 +1,86 @@
 package akashihi.osm.parallelpbf;
 
-import akashihi.osm.parallelpbf.entity.BoundBox;
-import akashihi.osm.parallelpbf.entity.Header;
+import akashihi.osm.parallelpbf.entity.*;
 import com.google.protobuf.InvalidProtocolBufferException;
 import crosby.binary.Osmformat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 
+/**
+ * Implemented parser for OSMHeader message.
+ *
+ * @see Header
+ */
+@Slf4j
 public final class OSMHeaderReader extends OSMReader {
-    private static Logger logger = LoggerFactory.getLogger(OSMHeaderReader.class);
+    /**
+     * Conversion from nano- to non-scaled.
+     */
+    private static final double NANO = 1e9;
 
     /**
      * Header processing callback. Must be reentrant.
      */
-    private final Consumer<Header> parseHeader;
+    private final Consumer<Header> headerCb;
 
     /**
-     * Header processing callback. Must be reentrant.
+     * Bounding box processing callback. Must be reentrant.
      */
-    private final Consumer<BoundBox> parseBoundBox;
+    private final Consumer<BoundBox> boundBoxCb;
 
-    OSMHeaderReader(byte[] blob, Semaphore tasksLimiter, Consumer<Header> parseHeader, Consumer<BoundBox> parseBoundBox) {
+    /**
+     * Constructs reader object.
+     *
+     * @param blob         blob to parse.
+     * @param tasksLimiter task limiting semaphore.
+     * @param onHeader     Callback to call with a filled Header entity.
+     *                     Header parsing will be partially skipped if set to null.
+     * @param onBoundBox   Callback to call if bounding box present in header.
+     *                     Bounding box parsing will be skipped completely if set to null
+     */
+    OSMHeaderReader(final byte[] blob,
+                    final Semaphore tasksLimiter,
+                    final Consumer<Header> onHeader,
+                    final Consumer<BoundBox> onBoundBox) {
         super(blob, tasksLimiter);
-        this.parseHeader = parseHeader;
-        this.parseBoundBox = parseBoundBox;
+        this.headerCb = onHeader;
+        this.boundBoxCb = onBoundBox;
     }
 
-    private boolean checkRequiredFeatures(List<String> features) {
+    /**
+     * Check, that all required features are supported by that parser.
+     *
+     * @param features Features list.
+     * @return true if all required features are supported, false otherwise.
+     */
+    private boolean checkRequiredFeatures(final List<String> features) {
         Optional<String> unsupported = features.stream()
                 .filter(f -> !f.equalsIgnoreCase("OsmSchema-V0.6"))
                 .filter(f -> !f.equalsIgnoreCase("DenseNodes"))
                 .filter(f -> !f.equalsIgnoreCase("HistoricalInformation"))
                 .findAny();
-        unsupported.ifPresent(s -> logger.error("Unsupported required feature found: {}", s));
+        unsupported.ifPresent(s -> log.error("Unsupported required feature found: {}", s));
         return !unsupported.isPresent();
     }
 
+    /**
+     * Parses OSMHeader value and checks required feature list from it.
+     *
+     * Check for required features is mandatory and is actually a reason, why we can't
+     * just skip parsing if no callbacks are set.
+     * @param message Raw OSMHeader blob.
+     */
     @Override
-    protected void read(byte[] message) {
+    protected void read(final byte[] message) {
         Osmformat.HeaderBlock headerData;
         try {
             headerData = Osmformat.HeaderBlock.parseFrom(message);
         } catch (InvalidProtocolBufferException e) {
-            logger.error("Error parsing OSMHeader block: {}", e.getMessage(), e);
+            log.error("Error parsing OSMHeader block: {}", e.getMessage(), e);
             throw new RuntimeException(e);
         }
 
@@ -55,26 +88,26 @@ public final class OSMHeaderReader extends OSMReader {
             throw new RuntimeException("Can't proceed with unsupported features");
         }
 
-        Header header = new Header(headerData.getRequiredFeaturesList(), headerData.getOptionalFeaturesList());
-        if (headerData.hasWritingprogram()) {
-            header.setWritingProgram(headerData.getWritingprogram());
-        }
-        if (headerData.hasSource()) {
-            header.setSource(headerData.getSource());
-        }
-        logger.debug("Header: {}", header.toString());
-        if (parseHeader != null) {
-            parseHeader.accept(header);
+        if (headerCb != null) {
+            Header header = new Header(headerData.getRequiredFeaturesList(), headerData.getOptionalFeaturesList());
+            if (headerData.hasWritingprogram()) {
+                header.setWritingProgram(headerData.getWritingprogram());
+            }
+            if (headerData.hasSource()) {
+                header.setSource(headerData.getSource());
+            }
+            log.debug("Header: {}", header.toString());
+            headerCb.accept(header);
         }
 
-        if (headerData.hasBbox()) {
-            BoundBox bbox = new BoundBox(headerData.getBbox().getLeft() / 1e9,
-                    headerData.getBbox().getTop() / 1e9,
-                    headerData.getBbox().getRight() / 1e9,
-                    headerData.getBbox().getBottom() / 1e9);
-            logger.debug("Bounding box: {}", bbox.toString());
-            if (parseBoundBox != null) {
-                parseBoundBox.accept(bbox);
+        if (boundBoxCb != null) {
+            if (headerData.hasBbox()) {
+                BoundBox bbox = new BoundBox(headerData.getBbox().getLeft() / NANO,
+                        headerData.getBbox().getTop() / NANO,
+                        headerData.getBbox().getRight() / NANO,
+                        headerData.getBbox().getBottom() / NANO);
+                log.debug("Bounding box: {}", bbox.toString());
+                boundBoxCb.accept(bbox);
             }
         }
     }
