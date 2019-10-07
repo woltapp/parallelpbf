@@ -1,9 +1,9 @@
-package akashihi.osm.parallelpbf;
+package akashihi.osm.parallelpbf.blob;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import crosby.binary.Fileformat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,25 +11,38 @@ import java.nio.ByteBuffer;
 import java.util.Optional;
 
 /**
- * Handles all stream operations and retrieves Blob* messages
+ * Handles all stream operations and retrieves Blob* messages.
  */
-class  BlobReader {
-    private static Logger logger = LoggerFactory.getLogger(BlobReader.class);
+@Slf4j
+@RequiredArgsConstructor
+public final class BlobReader {
     /**
-     * Input data stream
+     * The size field have fixed length of 4 bytes.
+     */
+    private static final int SIZE_FIELD_LENGTH = 4;
+
+    /**
+     * BlobHeader is never bigger then 64K.
+     */
+    private static final int MAX_HEADER_SIZE = 64 * 1024;
+
+    /**
+     * Blob is never bigger then 32M.
+     */
+    private static final int MAX_BLOB_SIZE = 32 * 1024 * 1024;
+
+    /**
+     * Input data stream.
      */
     private final InputStream input;
 
-    BlobReader(InputStream input) {
-        this.input = input;
-    }
-
     /**
-     * Just tries to read specified amount of bytes from the stream
+     * Just tries to read specified amount of bytes from the stream.
      * @param bytesToRead how many bytes should be read.
-     * @return Buffer of bytesToRead size or empty, in case of EOF or IOException.
+     * @return Buffer of bytesToRead size or empty,
+     *         in case of EOF or IOException.
      */
-    private Optional<byte[]> readFromStream(int bytesToRead) {
+    private Optional<byte[]> readFromStream(final int bytesToRead) {
         byte[] buffer = new byte[bytesToRead];
         try {
             int bytesRead = input.read(buffer);
@@ -37,7 +50,7 @@ class  BlobReader {
                 return Optional.empty();
             }
         } catch (IOException e) {
-            logger.error("Error reading from the stream: {}", e.getMessage(), e);
+            log.error("Error reading from the stream: {}", e.getMessage(), e);
             return Optional.empty();
         }
         return Optional.of(buffer);
@@ -45,24 +58,23 @@ class  BlobReader {
 
     /**
      * Reads next blob header length from the current stream position.
-     * As blob header length is just 4 bytes in network byte order, this functions makes no
-     * checks and will return garbage if called within a wrong stream position
+     * As blob header length is just 4 bytes in network byte order,
+     * this functions makes no checks and will return garbage
+     * if called within a wrong stream position.
      *
-     * @return length of next block header or 0 if can't be read.
+     * @return length of next block header or empty if can't be read.
      */
-    Optional<Integer> readBlobHeaderLength() {
-        final int MAX_HEADER_SIZE = 64 * 1024;
-        final int SIZE_FIELD_LENGTH = 4;
+    public Optional<Integer> readBlobHeaderLength() {
         Optional<byte[]> blobHeaderLengthBuffer = readFromStream(SIZE_FIELD_LENGTH);
         Optional<Integer> result = blobHeaderLengthBuffer.map(value -> {
             ByteBuffer blobHeaderLengthWrapped = ByteBuffer.wrap(value);
             int blobHeaderLength = blobHeaderLengthWrapped.getInt();
-            logger.trace("Read BlobHeaderLength: {}", blobHeaderLength);
+            log.trace("Read BlobHeaderLength: {}", blobHeaderLength);
             return blobHeaderLength;
         });
         return result.flatMap(value -> {
             if (value > MAX_HEADER_SIZE) {
-                logger.warn("BlobHeader size is too big: {}", value);
+                log.warn("BlobHeader size is too big: {}", value);
                 return Optional.empty();
             } else {
                 return result;
@@ -77,25 +89,24 @@ class  BlobReader {
      * or eof is reached.
      *
      * @param headerLength Number of bytes to read and interpret as BlobHeader
-     * @return Size of the following Blob in bytes or 0 in case of read error.
+     * @return Size of the following Blob in bytes or empty in case of read error.
      */
-    Optional<BlobInformation> readBlobHeader(int headerLength) {
-        final int MAX_BLOB_SIZE = 32 * 1024 * 1024;
+    public Optional<BlobInformation> readBlobHeader(final int headerLength) {
         Optional<byte[]> blobHeaderBuffer = readFromStream(headerLength);
         Optional<BlobInformation> result = blobHeaderBuffer.flatMap(value -> {
             Fileformat.BlobHeader header;
             try {
                 header = Fileformat.BlobHeader.parseFrom(blobHeaderBuffer.get());
-                logger.trace("Got BlobHeader with type: {}, data size: {}", header.getType(), header.getDatasize());
+                log.trace("Got BlobHeader with type: {}, data size: {}", header.getType(), header.getDatasize());
                 return Optional.of(new BlobInformation(header.getDatasize(), header.getType()));
             } catch (InvalidProtocolBufferException e) {
-                logger.error("Failed to parse BlobHeader: {}", e.getMessage(), e);
+                log.error("Failed to parse BlobHeader: {}", e.getMessage(), e);
                 return Optional.empty();
             }
         });
         return result.flatMap(value -> {
             if (value.getSize() > MAX_BLOB_SIZE) {
-                logger.warn("Blob size is too big: {}", value);
+                log.warn("Blob size is too big: {}", value);
                 return Optional.empty();
             } else {
                 return result;
@@ -103,7 +114,13 @@ class  BlobReader {
         });
     }
 
-    Optional<byte[]> readBlob(int blobLength) {
+    /**
+     * Reads next blobc from the current stream position. Size of the blob is
+     * specified in the parameters.
+     * @param blobLength Number of bytes to read
+     * @return Blob value or empty in case of read error
+     */
+    public Optional<byte[]> readBlob(final int blobLength) {
         return readFromStream(blobLength);
     }
 
