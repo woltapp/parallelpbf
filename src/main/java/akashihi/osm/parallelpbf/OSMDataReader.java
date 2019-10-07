@@ -2,6 +2,7 @@ package akashihi.osm.parallelpbf;
 
 import akashihi.osm.parallelpbf.entity.Node;
 import akashihi.osm.parallelpbf.entity.NodeInfo;
+import akashihi.osm.parallelpbf.entity.Way;
 import com.google.protobuf.InvalidProtocolBufferException;
 import crosby.binary.Osmformat;
 import org.slf4j.Logger;
@@ -30,7 +31,27 @@ public class OSMDataReader extends OSMReader {
     private void parseRelations(List<Osmformat.Relation> relationsList) {
     }
 
-    private void parseWays(List<Osmformat.Way> waysList) {
+    private Consumer<Osmformat.Way> makeWayParser(Osmformat.StringTable strings) {
+        return (wayMessage) -> {
+            long nodeId = 0;
+            Way way = new Way(wayMessage.getId());
+            for(int indx = 0; indx < wayMessage.getKeysCount(); ++indx) {
+                String key = strings.getS(wayMessage.getKeys(indx)).toStringUtf8();
+                String value = strings.getS(wayMessage.getVals(indx)).toStringUtf8();
+                way.getTags().put(key, value);
+            }
+            if (wayMessage.hasInfo()) {
+                Osmformat.Info infoMessage = wayMessage.getInfo();
+                String username = strings.getS(infoMessage.getUserSid()).toStringUtf8();
+                NodeInfo info = new NodeInfo(infoMessage.getUid(), username, infoMessage.getVersion(), infoMessage.getTimestamp(), infoMessage.getChangeset(), infoMessage.getVisible());
+                way.setInfo(info);
+            }
+            for(Long node : wayMessage.getRefsList()) {
+                nodeId+=node;
+                way.getNodes().add(nodeId);
+            }
+            logger.debug(way.toString());
+        };
     }
 
     private void parseDenseNodes(Osmformat.DenseNodes nodes, int granularity, long lat_offset, long lon_offset, int date_granularity, Osmformat.StringTable strings) {
@@ -86,7 +107,7 @@ public class OSMDataReader extends OSMReader {
         }
     }
 
-    private Consumer<Osmformat.Node> makeNodeParser(int granularity, long lat_offset, long lon_offset, int date_granularity, Osmformat.StringTable strings) {
+    private Consumer<Osmformat.Node> makeNodeParser(int granularity, long lat_offset, long lon_offset, Osmformat.StringTable strings) {
         return (nodeMessage) -> {
             double latitude = .000000001 * (lat_offset + (granularity * nodeMessage.getLat()));
             double longitude = .000000001 * (lon_offset + (granularity * nodeMessage.getLon()));
@@ -119,13 +140,14 @@ public class OSMDataReader extends OSMReader {
         List<Osmformat.PrimitiveGroup> groups = primitives.getPrimitivegroupList();
         for (Osmformat.PrimitiveGroup group: groups) {
             if (parseNodes != null) {
-                Consumer<Osmformat.Node> nodeParser = makeNodeParser(primitives.getGranularity(), primitives.getLatOffset(), primitives.getLonOffset(), primitives.getDateGranularity(), primitives.getStringtable());
+                Consumer<Osmformat.Node> nodeParser = makeNodeParser(primitives.getGranularity(), primitives.getLatOffset(), primitives.getLonOffset(), primitives.getStringtable());
                 group.getNodesList().forEach(nodeParser);
                 if (group.hasDense()) {
                     parseDenseNodes(group.getDense(), primitives.getGranularity(), primitives.getLatOffset(), primitives.getLonOffset(), primitives.getDateGranularity(), primitives.getStringtable());
                 }
             }
-            parseWays(group.getWaysList());
+            Consumer<Osmformat.Way> wayParser = makeWayParser(primitives.getStringtable());
+            group.getWaysList().forEach(wayParser);
             parseRelations(group.getRelationsList());
             parseChangesets(group.getChangesetsList());
         }
