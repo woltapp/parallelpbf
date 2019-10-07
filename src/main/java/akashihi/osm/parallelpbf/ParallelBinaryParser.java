@@ -5,9 +5,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public final class ParallelBinaryParser {
     private static Logger logger = LoggerFactory.getLogger(ParallelBinaryParser.class);
@@ -41,9 +44,12 @@ public final class ParallelBinaryParser {
      */
     private Runnable complete;
 
-    private final ExecutorService executor;
+    private final int threads;
     private final Semaphore tasksLimiter;
     private final BlobReader reader;
+
+    private ExecutorService executor;
+    private List<Future<?>> tasksInFlight = new LinkedList<>();
 
     private Optional<OSMReader> makeReaderForBlob(byte[] blob, BlobInformation information) {
         switch (information.getType()) {
@@ -77,8 +83,8 @@ public final class ParallelBinaryParser {
      *
      * @param information Blob's size and type
      * @return Processing results in form of Optional Future. Empty Optional
-     *         means, that processing hasn't started, while Future can be
-     *         awaited till end of the blob processing.
+     * means, that processing hasn't started, while Future can be
+     * awaited till end of the blob processing.
      */
     protected Optional<? extends Future<?>> processDataBlob(BlobInformation information) {
         return reader.readBlob(information.getSize())
@@ -88,7 +94,7 @@ public final class ParallelBinaryParser {
 
     public ParallelBinaryParser(InputStream input, int noThreads) {
         reader = new BlobReader(input);
-        executor = Executors.newFixedThreadPool(noThreads);
+        threads = noThreads;
         tasksLimiter = new Semaphore(noThreads);
     }
 
@@ -117,11 +123,36 @@ public final class ParallelBinaryParser {
     }
 
     public void parse() {
+        if (!tasksInFlight.isEmpty()) {
+            throw new IllegalStateException("Previous parse call is still in progress");
+        }
+
+        executor = Executors.newFixedThreadPool(threads);
         Optional<? extends Future<?>> blob;
         do {
             blob = reader.readBlobHeaderLength().flatMap(reader::readBlobHeader).flatMap(this::processDataBlob);
+            blob.ifPresent(tasksInFlight::add);
+
+            //We should remove completed tasks from time to time to not to increase our memory consumption
+            tasksInFlight = tasksInFlight.stream().filter(f -> !f.isDone()).collect(Collectors.toList());
         } while (blob.isPresent());
-        executor.shutdown();
+
+        //Wait for tasks completion
+        try {
+            for (Future<?> future : tasksInFlight) {
+                future.get();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (ExecutionException e) {
+            logger.error("Parsing failed with: {}", e.getMessage(), e);
+            return;
+        } finally {
+            executor.shutdown();
+            tasksInFlight.clear();
+        }
+
+        //Call completion callback.
         if (complete != null) {
             complete.run();
         }
