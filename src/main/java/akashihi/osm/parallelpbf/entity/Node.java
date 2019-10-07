@@ -1,15 +1,19 @@
 package akashihi.osm.parallelpbf.entity;
 
 import lombok.Data;
-
-import java.util.HashMap;
-import java.util.Map;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Data
-public class Node {
-    final long id;
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+public class Node extends OsmEntity {
+    public Node(long id, double lat, double lon) {
+        super(id);
+        this.lat = lat;
+        this.lon = lon;
+    }
+
     final double lat;
     final double lon;
-    Map<String, String> tags = new HashMap<>();
-    NodeInfo info;
 }

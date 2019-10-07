@@ -1,7 +1,7 @@
 package akashihi.osm.parallelpbf;
 
 import akashihi.osm.parallelpbf.entity.Node;
-import akashihi.osm.parallelpbf.entity.NodeInfo;
+import akashihi.osm.parallelpbf.entity.Info;
 import akashihi.osm.parallelpbf.entity.Way;
 import com.google.protobuf.InvalidProtocolBufferException;
 import crosby.binary.Osmformat;
@@ -49,7 +49,7 @@ public class OSMDataReader extends OSMReader {
             if (wayMessage.hasInfo()) {
                 Osmformat.Info infoMessage = wayMessage.getInfo();
                 String username = strings.getS(infoMessage.getUserSid()).toStringUtf8();
-                NodeInfo info = new NodeInfo(infoMessage.getUid(), username, infoMessage.getVersion(), infoMessage.getTimestamp(), infoMessage.getChangeset(), infoMessage.getVisible());
+                Info info = new Info(infoMessage.getUid(), username, infoMessage.getVersion(), infoMessage.getTimestamp(), infoMessage.getChangeset(), infoMessage.getVisible());
                 way.setInfo(info);
             }
             for(Long node : wayMessage.getRefsList()) {
@@ -105,7 +105,7 @@ public class OSMDataReader extends OSMReader {
                 } else {
                     visible = true;
                 }
-                NodeInfo info = new NodeInfo(uid, username, version, timestamp * date_granularity, changeset, visible);
+                Info info = new Info(uid, username, version, timestamp * date_granularity, changeset, visible);
                 node.setInfo(info);
             }
             logger.debug(node.toString());
@@ -127,7 +127,7 @@ public class OSMDataReader extends OSMReader {
             if (nodeMessage.hasInfo()) {
                 Osmformat.Info infoMessage = nodeMessage.getInfo();
                 String username = strings.getS(infoMessage.getUserSid()).toStringUtf8();
-                NodeInfo info = new NodeInfo(infoMessage.getUid(), username, infoMessage.getVersion(), infoMessage.getTimestamp(), infoMessage.getChangeset(), infoMessage.getVisible());
+                Info info = new Info(infoMessage.getUid(), username, infoMessage.getVersion(), infoMessage.getTimestamp(), infoMessage.getChangeset(), infoMessage.getVisible());
                 node.setInfo(info);
             }
             logger.debug(node.toString());
