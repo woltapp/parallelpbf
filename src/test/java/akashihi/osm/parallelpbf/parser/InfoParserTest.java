@@ -1,5 +1,6 @@
 package akashihi.osm.parallelpbf.parser;
 
+import akashihi.osm.parallelpbf.TestObjectsFactory;
 import crosby.binary.Osmformat;
 import lombok.var;
 import org.junit.jupiter.api.Tag;
@@ -30,7 +31,7 @@ class InfoParserTest {
                 .setLon(3)
                 .build();
 
-        var testedObject = new InfoParser(null, ParseTestObjects.stringTable);
+        var testedObject = new InfoParser(null, TestObjectsFactory.stringTable);
 
         assertNull(testedObject.parseInfo(node));
     }
@@ -41,13 +42,13 @@ class InfoParserTest {
                 .setId(1)
                 .setLat(2)
                 .setLon(3)
-                .setInfo(ParseTestObjects.infoMessage)
+                .setInfo(TestObjectsFactory.infoMessage)
                 .build();
 
-        var testedObject = new InfoParser(null, ParseTestObjects.stringTable);
+        var testedObject = new InfoParser(null, TestObjectsFactory.stringTable);
 
         var actual = testedObject.parseInfo(node);
-        assertEquals(ParseTestObjects.info, actual);
+        assertEquals(TestObjectsFactory.info, actual);
     }
 
     @Test
@@ -56,7 +57,7 @@ class InfoParserTest {
                 .setId(1)
                 .build();
 
-        var testedObject = new InfoParser(null, ParseTestObjects.stringTable);
+        var testedObject = new InfoParser(null, TestObjectsFactory.stringTable);
 
         assertNull(testedObject.parseInfo(way));
     }
@@ -65,13 +66,13 @@ class InfoParserTest {
     void testWayInfo() {
         var way = Osmformat.Way.newBuilder()
                 .setId(1)
-                .setInfo(ParseTestObjects.infoMessage)
+                .setInfo(TestObjectsFactory.infoMessage)
                 .build();
 
-        var testedObject = new InfoParser(null, ParseTestObjects.stringTable);
+        var testedObject = new InfoParser(null, TestObjectsFactory.stringTable);
 
         var actual = testedObject.parseInfo(way);
-        assertEquals(ParseTestObjects.info, actual);
+        assertEquals(TestObjectsFactory.info, actual);
     }
 
     @Test
@@ -80,7 +81,7 @@ class InfoParserTest {
                 .setId(1)
                 .build();
 
-        var testedObject = new InfoParser(null, ParseTestObjects.stringTable);
+        var testedObject = new InfoParser(null, TestObjectsFactory.stringTable);
 
         assertNull(testedObject.parseInfo(relation));
     }
@@ -89,12 +90,12 @@ class InfoParserTest {
     void testRelationInfo() {
         var relation = Osmformat.Relation.newBuilder()
                 .setId(1)
-                .setInfo(ParseTestObjects.infoMessage)
+                .setInfo(TestObjectsFactory.infoMessage)
                 .build();
 
-        var testedObject = new InfoParser(null, ParseTestObjects.stringTable);
+        var testedObject = new InfoParser(null, TestObjectsFactory.stringTable);
 
         var actual = testedObject.parseInfo(relation);
-        assertEquals(ParseTestObjects.info, actual);
+        assertEquals(TestObjectsFactory.info, actual);
     }
 }

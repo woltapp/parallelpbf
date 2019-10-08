@@ -1,6 +1,6 @@
 package akashihi.osm.parallelpbf.parser;
 
-import akashihi.osm.parallelpbf.entity.Node;
+import akashihi.osm.parallelpbf.TestObjectsFactory;
 import akashihi.osm.parallelpbf.entity.Relation;
 import akashihi.osm.parallelpbf.entity.RelationMember;
 import crosby.binary.Osmformat;
@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class RelationParserTest {
     private final Consumer<Relation> checker = (relation) -> {
         assertEquals(1, relation.getId());
-        assertEquals(ParseTestObjects.info, relation.getInfo());
+        assertEquals(TestObjectsFactory.info, relation.getInfo());
 
         var tags = relation.getTags();
         assertTrue(tags.containsKey("tag"));
@@ -28,17 +28,7 @@ class RelationParserTest {
 
     @Test
     void testRelationParse() {
-        var relationMessage = Osmformat.Relation.newBuilder()
-                .setId(1)
-                .addKeys(3)
-                .addVals(4)
-                .setInfo(ParseTestObjects.infoMessage)
-                .addMemids(9000)
-                .addTypes(Osmformat.Relation.MemberType.NODE)
-                .addRolesSid(1)
-                .build();
-
-        var testedObject = new RelationParser(checker, ParseTestObjects.stringTable);
-        testedObject.parse(relationMessage);
+        var testedObject = new RelationParser(checker, TestObjectsFactory.stringTable);
+        testedObject.parse(TestObjectsFactory.relationMessage);
     }
 }

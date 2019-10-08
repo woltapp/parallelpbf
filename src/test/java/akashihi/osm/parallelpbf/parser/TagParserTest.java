@@ -1,5 +1,6 @@
 package akashihi.osm.parallelpbf.parser;
 
+import akashihi.osm.parallelpbf.TestObjectsFactory;
 import crosby.binary.Osmformat;
 import lombok.var;
 import org.junit.jupiter.api.Tag;
@@ -26,7 +27,7 @@ class TagParserTest {
 
     @Test
     void testParseTags() {
-        var testedObject = new TagParser(null, ParseTestObjects.stringTable);
+        var testedObject = new TagParser(null, TestObjectsFactory.stringTable);
         var actual = testedObject.parseTags(Collections.singletonList(3), Collections.singletonList(4));
 
         testedObject.parse(null);
