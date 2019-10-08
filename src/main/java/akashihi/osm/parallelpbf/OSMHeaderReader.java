@@ -69,9 +69,10 @@ public final class OSMHeaderReader extends OSMReader {
 
     /**
      * Parses OSMHeader value and checks required feature list from it.
-     *
+     * <p>
      * Check for required features is mandatory and is actually a reason, why we can't
      * just skip parsing if no callbacks are set.
+     *
      * @param message Raw OSMHeader blob.
      */
     @Override
@@ -100,15 +101,13 @@ public final class OSMHeaderReader extends OSMReader {
             headerCb.accept(header);
         }
 
-        if (boundBoxCb != null) {
-            if (headerData.hasBbox()) {
-                BoundBox bbox = new BoundBox(headerData.getBbox().getLeft() / NANO,
-                        headerData.getBbox().getTop() / NANO,
-                        headerData.getBbox().getRight() / NANO,
-                        headerData.getBbox().getBottom() / NANO);
-                log.debug("Bounding box: {}", bbox.toString());
-                boundBoxCb.accept(bbox);
-            }
+        if (boundBoxCb != null && headerData.hasBbox()) {
+            BoundBox bbox = new BoundBox(headerData.getBbox().getLeft() / NANO,
+                    headerData.getBbox().getTop() / NANO,
+                    headerData.getBbox().getRight() / NANO,
+                    headerData.getBbox().getBottom() / NANO);
+            log.debug("Bounding box: {}", bbox.toString());
+            boundBoxCb.accept(bbox);
         }
     }
 }

@@ -22,11 +22,6 @@ import java.util.function.Consumer;
 @Slf4j
 public class OSMDataReader extends OSMReader {
     /**
-     * Nano degrees scale.
-     */
-    private static final double NANO = .000000001;
-
-    /**
      * Changeset processing callback. Must be reentrant.
      */
     private final Consumer<Long> changesetsCb;
