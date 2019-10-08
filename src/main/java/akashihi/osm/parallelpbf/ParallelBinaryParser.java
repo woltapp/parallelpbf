@@ -162,8 +162,9 @@ public final class ParallelBinaryParser {
      *
      * @param onChangesets Callback function. May be null, in that case parsing of changesets will be skipped.
      */
-    public void setChangesetsCallback(final Consumer<Long> onChangesets) {
+    public ParallelBinaryParser onChangeset(final Consumer<Long> onChangesets) {
         this.changesetsCb = onChangesets;
+        return this;
     }
 
     /**
@@ -171,8 +172,9 @@ public final class ParallelBinaryParser {
      *
      * @param onRelations Callback function. May be null, in that case parsing of relations will be skipped.
      */
-    public void setRelationsCallback(final Consumer<Relation> onRelations) {
+    public ParallelBinaryParser onRelation(final Consumer<Relation> onRelations) {
         this.relationsCb = onRelations;
+        return this;
     }
 
     /**
@@ -180,8 +182,9 @@ public final class ParallelBinaryParser {
      *
      * @param onNodes Callback function. May be null, in that case parsing of nodes will be skipped.
      */
-    public void setNodesCallback(final Consumer<Node> onNodes) {
+    public ParallelBinaryParser onNode(final Consumer<Node> onNodes) {
         this.nodesCb = onNodes;
+        return this;
     }
 
     /**
@@ -189,8 +192,9 @@ public final class ParallelBinaryParser {
      *
      * @param onWays Callback function. May be null, in that case parsing of ways will be skipped.
      */
-    public void setsetWaysCallback(final Consumer<Way> onWays) {
+    public ParallelBinaryParser onWay(final Consumer<Way> onWays) {
         this.waysCb = onWays;
+        return this;
     }
 
     /**
@@ -199,8 +203,9 @@ public final class ParallelBinaryParser {
      * @param onHeader Callback function. May be null, in that case it will not be called,
      *                 but header still will be parsed.
      */
-    public void setHeaderCallback(final Consumer<Header> onHeader) {
+    public ParallelBinaryParser onHeader(final Consumer<Header> onHeader) {
         this.headerCb = onHeader;
+        return this;
     }
 
     /**
@@ -209,8 +214,9 @@ public final class ParallelBinaryParser {
      *
      * @param onBoundBox Callback function. May be null, in that case bound box will not be parsed at all.
      */
-    public void setBoundBoxCallback(final Consumer<BoundBox> onBoundBox) {
+    public ParallelBinaryParser onBoundBox(final Consumer<BoundBox> onBoundBox) {
         this.boundBoxCb = onBoundBox;
+        return this;
     }
 
     /**
@@ -220,8 +226,9 @@ public final class ParallelBinaryParser {
      *
      * @param onComplete Callback function. May be null, in that case it will not be called.
      */
-    public void setCompleteCallback(final Runnable onComplete) {
+    public ParallelBinaryParser onComplete(final Runnable onComplete) {
         this.completeCb = onComplete;
+        return this;
     }
 
     /**

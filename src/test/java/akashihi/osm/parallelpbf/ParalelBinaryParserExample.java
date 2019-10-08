@@ -73,17 +73,15 @@ public class ParalelBinaryParserExample {
         root.setLevel(Level.TRACE);
 
         FileInputStream input = new FileInputStream("/home/chollya/Downloads/sample.pbf");
-        ParallelBinaryParser parser = new ParallelBinaryParser(input, 1);
-
-        parser.setHeaderCallback(this::processHeader);
-        parser.setBoundBoxCallback(this::processBoundingBox);
-        parser.setCompleteCallback(this::printOnCompletions);
-        parser.setNodesCallback(this::processNodes);
-        parser.setsetWaysCallback(this::processWays);
-        parser.setRelationsCallback(this::processRelations);
-        parser.setChangesetsCallback(this::processChangesets);
-
-        parser.parse();
+        new ParallelBinaryParser(input, 1)
+                .onHeader(this::processHeader)
+                .onBoundBox(this::processBoundingBox)
+                .onComplete(this::printOnCompletions)
+                .onNode(this::processNodes)
+                .onWay(this::processWays)
+                .onRelation(this::processRelations)
+                .onChangeset(this::processChangesets)
+                .parse();
     }
 
     public static void main(String[] args) throws FileNotFoundException {
