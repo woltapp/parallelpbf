@@ -81,6 +81,7 @@ public class ParalelBinaryParserExample {
         parser.setNodesCallback(this::processNodes);
         parser.setsetWaysCallback(this::processWays);
         parser.setRelationsCallback(this::processRelations);
+        parser.setChangesetsCallback(this::processChangesets);
 
         parser.parse();
     }
