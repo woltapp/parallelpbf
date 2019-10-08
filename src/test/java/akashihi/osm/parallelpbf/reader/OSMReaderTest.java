@@ -3,6 +3,7 @@ package akashihi.osm.parallelpbf.reader;
 import com.google.protobuf.ByteString;
 import crosby.binary.Fileformat;
 import lombok.var;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -13,6 +14,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class OSMReaderTest {
     private static final String testString = "TestString";
+
+    private Semaphore limiter;
+
+    @BeforeEach
+    void setUp() {
+        limiter = new Semaphore(0);
+    }
 
     private static class TestReader extends OSMReader {
         TestReader(byte[] blobValue, Semaphore tasksLimiterValue) {
@@ -32,8 +40,6 @@ class OSMReaderTest {
                 .setRaw(ByteString.copyFrom(content))
                 .build().toByteArray();
 
-        Semaphore limiter = new Semaphore(0);
-
         var testedObject = new TestReader(blob, limiter);
         testedObject.run();
         assertEquals(1, limiter.availablePermits());
@@ -51,8 +57,6 @@ class OSMReaderTest {
                 .setRawSize(content.length)
                 .setZlibData(ByteString.copyFrom(compressed_content, 0, compressedDataLength))
                 .build().toByteArray();
-
-        Semaphore limiter = new Semaphore(0);
 
         var testedObject = new TestReader(blob, limiter);
         testedObject.run();
@@ -72,8 +76,6 @@ class OSMReaderTest {
                 .setZlibData(ByteString.copyFrom(compressed_content, 0, compressedDataLength))
                 .build().toByteArray();
 
-        Semaphore limiter = new Semaphore(0);
-
         var testedObject = new TestReader(blob, limiter);
         assertThrows(RuntimeException.class, testedObject::run);
     }
@@ -84,8 +86,6 @@ class OSMReaderTest {
                 .setRawSize(1)
                 .setZlibData(ByteString.copyFromUtf8("test"))
                 .build().toByteArray();
-
-        Semaphore limiter = new Semaphore(0);
 
         var testedObject = new TestReader(blob, limiter);
         assertThrows(RuntimeException.class, testedObject::run);
@@ -98,16 +98,12 @@ class OSMReaderTest {
                 .setOBSOLETEBzip2Data(ByteString.copyFromUtf8(""))
                 .build().toByteArray();
 
-        Semaphore limiter = new Semaphore(0);
-
         var testedObject = new TestReader(blob, limiter);
         assertThrows(RuntimeException.class, testedObject::run);
     }
 
     @Test
     void testInvalidBlobFormat() {
-        Semaphore limiter = new Semaphore(0);
-
         var testedObject = new TestReader("fail".getBytes(StandardCharsets.UTF_8), limiter);
         assertThrows(RuntimeException.class, testedObject::run);
     }
