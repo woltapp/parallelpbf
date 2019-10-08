@@ -4,6 +4,7 @@ import akashihi.osm.parallelpbf.entity.Info;
 import akashihi.osm.parallelpbf.entity.Node;
 import crosby.binary.Osmformat;
 import lombok.extern.slf4j.Slf4j;
+import lombok.var;
 
 import java.util.function.Consumer;
 
@@ -109,7 +110,7 @@ public final class NodeParser extends BaseParser<Osmformat.Node, Consumer<Node>>
                 }
             }
             if (nodes.hasDenseinfo()) {
-                Osmformat.DenseInfo infoMessage = nodes.getDenseinfo();
+                var infoMessage = nodes.getDenseinfo();
                 uid += infoMessage.getUid(indx);
                 usernameStringId += infoMessage.getUserSid(indx);
                 String username = getStringTable().getS(usernameStringId).toStringUtf8();
