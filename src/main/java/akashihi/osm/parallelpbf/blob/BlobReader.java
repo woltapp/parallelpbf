@@ -115,7 +115,7 @@ public final class BlobReader {
     }
 
     /**
-     * Reads next blobc from the current stream position. Size of the blob is
+     * Reads next blob from the current stream position. Size of the blob is
      * specified in the parameters.
      * @param blobLength Number of bytes to read
      * @return Blob value or empty in case of read error
