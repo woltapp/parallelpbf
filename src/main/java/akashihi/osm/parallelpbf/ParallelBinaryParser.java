@@ -2,6 +2,9 @@ package akashihi.osm.parallelpbf;
 
 import akashihi.osm.parallelpbf.blob.*;
 import akashihi.osm.parallelpbf.entity.*;
+import akashihi.osm.parallelpbf.reader.OSMDataReader;
+import akashihi.osm.parallelpbf.reader.OSMHeaderReader;
+import akashihi.osm.parallelpbf.reader.OSMReader;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.InputStream;
@@ -161,6 +164,7 @@ public final class ParallelBinaryParser {
      * Sets changeset callback, that will be called for each successfully parsed Changeset.
      *
      * @param onChangesets Callback function. May be null, in that case parsing of changesets will be skipped.
+     * @return ParallelBinaryParser to mimic builder interface.
      */
     public ParallelBinaryParser onChangeset(final Consumer<Long> onChangesets) {
         this.changesetsCb = onChangesets;
@@ -171,6 +175,7 @@ public final class ParallelBinaryParser {
      * Sets relation callback, that will be called for each successfully parsed Relation.
      *
      * @param onRelations Callback function. May be null, in that case parsing of relations will be skipped.
+     * @return ParallelBinaryParser to mimic builder interface.
      */
     public ParallelBinaryParser onRelation(final Consumer<Relation> onRelations) {
         this.relationsCb = onRelations;
@@ -181,6 +186,7 @@ public final class ParallelBinaryParser {
      * Sets node callback, that will be called for each successfully parsed Node.
      *
      * @param onNodes Callback function. May be null, in that case parsing of nodes will be skipped.
+     * @return ParallelBinaryParser to mimic builder interface.
      */
     public ParallelBinaryParser onNode(final Consumer<Node> onNodes) {
         this.nodesCb = onNodes;
@@ -191,6 +197,7 @@ public final class ParallelBinaryParser {
      * Sets way callback, that will be called for each successfully parsed Way.
      *
      * @param onWays Callback function. May be null, in that case parsing of ways will be skipped.
+     * @return ParallelBinaryParser to mimic builder interface.
      */
     public ParallelBinaryParser onWay(final Consumer<Way> onWays) {
         this.waysCb = onWays;
@@ -202,6 +209,7 @@ public final class ParallelBinaryParser {
      *
      * @param onHeader Callback function. May be null, in that case it will not be called,
      *                 but header still will be parsed.
+     * @return ParallelBinaryParser to mimic builder interface.
      */
     public ParallelBinaryParser onHeader(final Consumer<Header> onHeader) {
         this.headerCb = onHeader;
@@ -213,6 +221,7 @@ public final class ParallelBinaryParser {
      * BoundBox message.
      *
      * @param onBoundBox Callback function. May be null, in that case bound box will not be parsed at all.
+     * @return ParallelBinaryParser to mimic builder interface.
      */
     public ParallelBinaryParser onBoundBox(final Consumer<BoundBox> onBoundBox) {
         this.boundBoxCb = onBoundBox;
@@ -225,6 +234,7 @@ public final class ParallelBinaryParser {
      * will not be called after calling ths one.
      *
      * @param onComplete Callback function. May be null, in that case it will not be called.
+     * @return ParallelBinaryParser to mimic builder interface.
      */
     public ParallelBinaryParser onComplete(final Runnable onComplete) {
         this.completeCb = onComplete;

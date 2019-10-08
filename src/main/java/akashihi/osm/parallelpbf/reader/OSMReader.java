@@ -1,4 +1,4 @@
-package akashihi.osm.parallelpbf;
+package akashihi.osm.parallelpbf.reader;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import crosby.binary.Fileformat;

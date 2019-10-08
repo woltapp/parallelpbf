@@ -1,4 +1,4 @@
-package akashihi.osm.parallelpbf;
+package akashihi.osm.parallelpbf.reader;
 
 import akashihi.osm.parallelpbf.entity.Node;
 import akashihi.osm.parallelpbf.entity.Relation;
@@ -52,7 +52,7 @@ public class OSMDataReader extends OSMReader {
      * @param onChangesets Callback to call on changeset parse. May be null,
      *                     in that case changesets parsing will be skipped.
      */
-    OSMDataReader(final byte[] blob,
+    public OSMDataReader(final byte[] blob,
                   final Semaphore tasksLimiter,
                   final Consumer<Node> onNodes,
                   final Consumer<Way> onWays,

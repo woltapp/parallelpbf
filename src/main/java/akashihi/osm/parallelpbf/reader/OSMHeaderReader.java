@@ -1,4 +1,4 @@
-package akashihi.osm.parallelpbf;
+package akashihi.osm.parallelpbf.reader;
 
 import akashihi.osm.parallelpbf.entity.*;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -42,7 +42,7 @@ public final class OSMHeaderReader extends OSMReader {
      * @param onBoundBox   Callback to call if bounding box present in header.
      *                     Bounding box parsing will be skipped completely if set to null
      */
-    OSMHeaderReader(final byte[] blob,
+    public OSMHeaderReader(final byte[] blob,
                     final Semaphore tasksLimiter,
                     final Consumer<Header> onHeader,
                     final Consumer<BoundBox> onBoundBox) {
