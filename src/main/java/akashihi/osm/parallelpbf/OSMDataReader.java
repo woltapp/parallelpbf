@@ -2,6 +2,7 @@ package akashihi.osm.parallelpbf;
 
 import akashihi.osm.parallelpbf.entity.*;
 import akashihi.osm.parallelpbf.parser.RelationParser;
+import akashihi.osm.parallelpbf.parser.WayParser;
 import com.google.protobuf.InvalidProtocolBufferException;
 import crosby.binary.Osmformat;
 import lombok.extern.slf4j.Slf4j;
@@ -88,36 +89,6 @@ public class OSMDataReader extends OSMReader {
             return new Info(infoMessage.getUid(), username, infoMessage.getVersion(), infoMessage.getTimestamp(), infoMessage.getChangeset(), infoMessage.getVisible());
         }
         return null;
-    }
-
-    private void relationParser(final Osmformat.Relation relationMessage) {
-        long memberId = 0;
-        Relation relation = new Relation(relationMessage.getId());
-        relation.setTags(parseTags(relationMessage.getKeysList(), relationMessage.getValsList()));
-        relation.setInfo(parseInfo(relationMessage));
-        for (int indx = 0; indx < relationMessage.getRolesSidCount(); ++indx) {
-            String role = stringTable.getS(relationMessage.getRolesSid(indx)).toStringUtf8();
-            memberId += relationMessage.getMemids(indx);
-            RelationMember.Type type = RelationMember.Type.get(relationMessage.getTypes(indx).getNumber());
-            RelationMember member = new RelationMember(memberId, role, type);
-            relation.getMembers().add(member);
-        }
-
-        log.debug(relation.toString());
-        relationsCb.accept(relation);
-    }
-
-    private void wayParser(final Osmformat.Way wayMessage) {
-        long nodeId = 0;
-        Way way = new Way(wayMessage.getId());
-        way.setTags(parseTags(wayMessage.getKeysList(), wayMessage.getValsList()));
-        way.setInfo(parseInfo(wayMessage));
-        for (Long node : wayMessage.getRefsList()) {
-            nodeId += node;
-            way.getNodes().add(nodeId);
-        }
-        log.debug(way.toString());
-        waysCb.accept(way);
     }
 
     private void parseDenseNodes(final Osmformat.DenseNodes nodes, final int granularity, final long latOffset, final long lonOffset, final int dateGranularity) {
@@ -214,7 +185,8 @@ public class OSMDataReader extends OSMReader {
                 }
             }
             if (waysCb != null) {
-                group.getWaysList().forEach(this::wayParser);
+                var parser = new WayParser<Osmformat.Way, Consumer<Way>>(waysCb, stringTable);
+                group.getWaysList().forEach(parser::parse);
             }
             if (relationsCb != null) {
                 var parser = new RelationParser<Osmformat.Relation, Consumer<Relation>>(relationsCb, stringTable);

@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 @Slf4j
 public final class RelationParser<M extends Osmformat.Relation, T extends Consumer<Relation>> extends BaseParser<M, T> {
     /**
-     * Parent compatible constructor, that sets callback ans string table.
+     * Parent compatible constructor that sets callback and string table.
      * @param callback Callback to call on successful parse.
      * @param stringTable String table to use while parsing.
      */
