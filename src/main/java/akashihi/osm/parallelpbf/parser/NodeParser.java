@@ -11,12 +11,9 @@ import java.util.function.Consumer;
  * Implements OSM Way parser.
  *
  * Can parse both primitive and dense nodes.
- *
- * @param <M> PBF node type.
- * @param <T> Way typed callback.
  */
 @Slf4j
-public final class NodeParser<M extends Osmformat.Node, T extends Consumer<Node>> extends BaseParser<M, T> {
+public final class NodeParser extends BaseParser<Osmformat.Node, Consumer<Node>> {
     /**
      * Nano degrees scale.
      */
@@ -53,7 +50,7 @@ public final class NodeParser<M extends Osmformat.Node, T extends Consumer<Node>
      * @param lonOffsetValue Longitude offset of the grid.
      * @param dateGranularityValue Date granularity value.
      */
-    public NodeParser(final T callback,
+    public NodeParser(final Consumer<Node> callback,
                       final Osmformat.StringTable stringTable,
                       final int granularityValue,
                       final long latOffsetValue,
@@ -67,7 +64,7 @@ public final class NodeParser<M extends Osmformat.Node, T extends Consumer<Node>
     }
 
     @Override
-    public void parse(final M message) {
+    public void parse(final Osmformat.Node message) {
         double latitude = NANO * (latOffset + (granularity * message.getLat()));
         double longitude = NANO * (lonOffset + (granularity * message.getLon()));
         Node node = new Node(message.getId(), latitude, longitude);

@@ -87,7 +87,7 @@ public class OSMDataReader extends OSMReader {
         var groups = primitives.getPrimitivegroupList();
         for (Osmformat.PrimitiveGroup group : groups) {
             if (nodesCb != null) {
-                var parser = new NodeParser<Osmformat.Node, Consumer<Node>>(nodesCb,
+                var parser = new NodeParser(nodesCb,
                         stringTable,
                         primitives.getGranularity(),
                         primitives.getLatOffset(),
