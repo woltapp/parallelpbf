@@ -5,8 +5,8 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ParalelBinaryParserExample {
@@ -72,7 +72,7 @@ public class ParalelBinaryParserExample {
         Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         root.setLevel(Level.TRACE);
 
-        FileInputStream input = new FileInputStream("/home/chollya/Downloads/sample.pbf");
+        InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream("sample.pbf");
         new ParallelBinaryParser(input, 1)
                 .onHeader(this::processHeader)
                 .onBoundBox(this::processBoundingBox)
