@@ -3,8 +3,7 @@ package akashihi.osm.parallelpbf;
 import akashihi.osm.parallelpbf.entity.*;
 import com.google.protobuf.InvalidProtocolBufferException;
 import crosby.binary.Osmformat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.List;
@@ -12,110 +11,115 @@ import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 
+@Slf4j
 public class OSMDataReader extends OSMReader {
-    private static Logger logger = LoggerFactory.getLogger(OSMDataReader.class);
+    /**
+     * Nano degrees scale.
+     */
+    private static final double NANO = .000000001;
 
     /**
      * Changeset processing callback. Must be reentrant.
      */
-    final private Consumer<Long> parseChangesets;
+    private final Consumer<Long> changesetsCb;
 
     /**
      * Nodes processing callback. Must be reentrant.
      */
-    final private Consumer<Node> parseNodes;
+    private final Consumer<Node> nodesCb;
 
     /**
      * Ways processing callback. Must be reentrant.
      */
-    final private Consumer<Way> parseWays;
+    private final Consumer<Way> waysCb;
 
     /**
      * Relations processing callback. Must be reentrant.
      */
-    final private Consumer<Relation> parseRelations;
+    private final Consumer<Relation> relationsCb;
 
-    OSMDataReader(byte[] blob, Semaphore tasksLimiter, Consumer<Node> parseNodes, Consumer<Way> parseWays, Consumer<Relation> parseRelations, Consumer<Long> parseChangesets) {
+    /**
+     * Blob's stringtable is published here during parse process.
+     */
+    private Osmformat.StringTable stringTable;
+
+    OSMDataReader(final byte[] blob, final Semaphore tasksLimiter, final Consumer<Node> onNodes, final Consumer<Way> onWays, final Consumer<Relation> onRelations, final Consumer<Long> onChangesets) {
         super(blob, tasksLimiter);
-        this.parseNodes = parseNodes;
-        this.parseWays = parseWays;
-        this.parseRelations = parseRelations;
-        this.parseChangesets = parseChangesets;
+        this.nodesCb = onNodes;
+        this.waysCb = onWays;
+        this.relationsCb = onRelations;
+        this.changesetsCb = onChangesets;
     }
 
-    private Map<String, String> parseTags(List<Integer> keys, List<Integer> values, Osmformat.StringTable strings) {
+    private Map<String, String> parseTags(final List<Integer> keys, final List<Integer> values) {
         HashMap<String, String> result = new HashMap<>();
-        for(int indx = 0; indx < keys.size(); ++indx) {
-            String key = strings.getS(keys.get(indx)).toStringUtf8();
-            String value = strings.getS(values.get(indx)).toStringUtf8();
+        for (int indx = 0; indx < keys.size(); ++indx) {
+            String key = stringTable.getS(keys.get(indx)).toStringUtf8();
+            String value = stringTable.getS(values.get(indx)).toStringUtf8();
             result.put(key, value);
         }
         return result;
     }
 
-    private <M> Info parseInfo(M message, Osmformat.StringTable strings) {
+    private <M> Info parseInfo(final M message) {
         Osmformat.Info infoMessage = null;
         if (message instanceof Osmformat.Node) {
-            Osmformat.Node nodeMessage = (Osmformat.Node)message;
+            Osmformat.Node nodeMessage = (Osmformat.Node) message;
             if (nodeMessage.hasInfo()) {
                 infoMessage = nodeMessage.getInfo();
             }
         }
         if (message instanceof Osmformat.Way) {
-            Osmformat.Way wayMessage = (Osmformat.Way)message;
+            Osmformat.Way wayMessage = (Osmformat.Way) message;
             if (wayMessage.hasInfo()) {
                 infoMessage = wayMessage.getInfo();
             }
         }
         if (message instanceof Osmformat.Relation) {
-            Osmformat.Relation relMessage = (Osmformat.Relation)message;
+            Osmformat.Relation relMessage = (Osmformat.Relation) message;
             if (relMessage.hasInfo()) {
                 infoMessage = relMessage.getInfo();
             }
         }
         if (infoMessage != null) {
-            String username = strings.getS(infoMessage.getUserSid()).toStringUtf8();
+            String username = stringTable.getS(infoMessage.getUserSid()).toStringUtf8();
             return new Info(infoMessage.getUid(), username, infoMessage.getVersion(), infoMessage.getTimestamp(), infoMessage.getChangeset(), infoMessage.getVisible());
         }
         return null;
     }
 
-    private Consumer<Osmformat.Relation> makeRelationParser(Osmformat.StringTable strings) {
-        return (relationMessage) -> {
-            long member_id=0;
-            Relation relation = new Relation(relationMessage.getId());
-            relation.setTags(parseTags(relationMessage.getKeysList(), relationMessage.getValsList(), strings));
-            relation.setInfo(parseInfo(relationMessage, strings));
-            for(int indx=0; indx<relationMessage.getRolesSidCount(); ++indx) {
-                String role = strings.getS(relationMessage.getRolesSid(indx)).toStringUtf8();
-                member_id += relationMessage.getMemids(indx);
-                RelationMember.Type type = RelationMember.Type.get(relationMessage.getTypes(indx).getNumber());
-                RelationMember member = new RelationMember(member_id, role, type);
-                relation.getMembers().add(member);
-            }
+    private void relationParser(final Osmformat.Relation relationMessage) {
+        long memberId = 0;
+        Relation relation = new Relation(relationMessage.getId());
+        relation.setTags(parseTags(relationMessage.getKeysList(), relationMessage.getValsList()));
+        relation.setInfo(parseInfo(relationMessage));
+        for (int indx = 0; indx < relationMessage.getRolesSidCount(); ++indx) {
+            String role = stringTable.getS(relationMessage.getRolesSid(indx)).toStringUtf8();
+            memberId += relationMessage.getMemids(indx);
+            RelationMember.Type type = RelationMember.Type.get(relationMessage.getTypes(indx).getNumber());
+            RelationMember member = new RelationMember(memberId, role, type);
+            relation.getMembers().add(member);
+        }
 
-            logger.debug(relation.toString());
-            parseRelations.accept(relation);
-        };
+        log.debug(relation.toString());
+        relationsCb.accept(relation);
     }
 
-    private Consumer<Osmformat.Way> makeWayParser(Osmformat.StringTable strings) {
-        return (wayMessage) -> {
-            long nodeId = 0;
-            Way way = new Way(wayMessage.getId());
-            way.setTags(parseTags(wayMessage.getKeysList(), wayMessage.getValsList(), strings));
-            way.setInfo(parseInfo(wayMessage, strings));
-            for(Long node : wayMessage.getRefsList()) {
-                nodeId+=node;
-                way.getNodes().add(nodeId);
-            }
-            logger.debug(way.toString());
-            parseWays.accept(way);
-        };
+    private void wayParser(final Osmformat.Way wayMessage) {
+        long nodeId = 0;
+        Way way = new Way(wayMessage.getId());
+        way.setTags(parseTags(wayMessage.getKeysList(), wayMessage.getValsList()));
+        way.setInfo(parseInfo(wayMessage));
+        for (Long node : wayMessage.getRefsList()) {
+            nodeId += node;
+            way.getNodes().add(nodeId);
+        }
+        log.debug(way.toString());
+        waysCb.accept(way);
     }
 
-    private void parseDenseNodes(Osmformat.DenseNodes nodes, int granularity, long lat_offset, long lon_offset, int date_granularity, Osmformat.StringTable strings) {
-        int keyval_position = 0;
+    private void parseDenseNodes(final Osmformat.DenseNodes nodes, final int granularity, final long latOffset, final long lonOffset, final int dateGranularity) {
+        int tagsKeyValuePointer = 0;
         long id = 0;
         double latitude = 0;
         double longitude = 0;
@@ -123,32 +127,32 @@ public class OSMDataReader extends OSMReader {
         long timestamp = 0;
         long changeset = 0;
         int uid = 0;
-        int user_sid = 0;
-        for(int indx = 0; indx < nodes.getIdCount(); indx++) {
+        int usernameStringId = 0;
+        for (int indx = 0; indx < nodes.getIdCount(); indx++) {
             id += nodes.getId(indx);
-            latitude += .000000001 * (lat_offset + (granularity * nodes.getLat(indx)));
-            longitude += .000000001 * (lon_offset + (granularity * nodes.getLon(indx)));
+            latitude += NANO * (latOffset + (granularity * nodes.getLat(indx)));
+            longitude += NANO * (lonOffset + (granularity * nodes.getLon(indx)));
 
             Node node = new Node(id, latitude, longitude);
             if (nodes.getKeysValsCount() > 0) {
-                while(true) {
-                    int key_indx = nodes.getKeysVals(keyval_position);
-                    ++keyval_position;
-                    if (key_indx == 0) {
+                while (true) {
+                    int keyIndex = nodes.getKeysVals(tagsKeyValuePointer);
+                    ++tagsKeyValuePointer;
+                    if (keyIndex == 0) {
                         break;
                     }
-                    int val_indx = nodes.getKeysVals(keyval_position);
-                    ++keyval_position;
-                    String key = strings.getS(key_indx).toStringUtf8();
-                    String value = strings.getS(val_indx).toStringUtf8();
+                    int valueIndex = nodes.getKeysVals(tagsKeyValuePointer);
+                    ++tagsKeyValuePointer;
+                    String key = stringTable.getS(keyIndex).toStringUtf8();
+                    String value = stringTable.getS(valueIndex).toStringUtf8();
                     node.getTags().put(key, value);
                 }
             }
             if (nodes.hasDenseinfo()) {
                 Osmformat.DenseInfo infoMessage = nodes.getDenseinfo();
                 uid += infoMessage.getUid(indx);
-                user_sid += infoMessage.getUserSid(indx);
-                String username = strings.getS(user_sid).toStringUtf8();
+                usernameStringId += infoMessage.getUserSid(indx);
+                String username = stringTable.getS(usernameStringId).toStringUtf8();
                 changeset += infoMessage.getChangeset(indx);
                 timestamp += infoMessage.getTimestamp(indx);
                 int version = infoMessage.getVersion(indx);
@@ -158,58 +162,66 @@ public class OSMDataReader extends OSMReader {
                 } else {
                     visible = true;
                 }
-                Info info = new Info(uid, username, version, timestamp * date_granularity, changeset, visible);
+                Info info = new Info(uid, username, version, timestamp * dateGranularity, changeset, visible);
                 node.setInfo(info);
             }
-            logger.debug(node.toString());
-            parseNodes.accept(node);
+            log.debug(node.toString());
+            nodesCb.accept(node);
 
         }
     }
 
-    private Consumer<Osmformat.Node> makeNodeParser(int granularity, long lat_offset, long lon_offset, Osmformat.StringTable strings) {
+    private Consumer<Osmformat.Node> makeNodeParser(final int granularity, final long latOffset, final long lonOffset) {
         return (nodeMessage) -> {
-            double latitude = .000000001 * (lat_offset + (granularity * nodeMessage.getLat()));
-            double longitude = .000000001 * (lon_offset + (granularity * nodeMessage.getLon()));
+            double latitude = NANO * (latOffset + (granularity * nodeMessage.getLat()));
+            double longitude = NANO * (lonOffset + (granularity * nodeMessage.getLon()));
             Node node = new Node(nodeMessage.getId(), latitude, longitude);
-            node.setTags(parseTags(nodeMessage.getKeysList(), nodeMessage.getValsList(), strings));
-            node.setInfo(parseInfo(nodeMessage, strings));
-            logger.debug(node.toString());
-            parseNodes.accept(node);
+            node.setTags(parseTags(nodeMessage.getKeysList(), nodeMessage.getValsList()));
+            node.setInfo(parseInfo(nodeMessage));
+            log.debug(node.toString());
+            nodesCb.accept(node);
         };
     }
 
+    /**
+     * Extracts primitives groups from the Blob and parses them.
+     * <p>
+     * In case callback for some of the primitives is not set, it will
+     * be ignored and not parsed.
+     *
+     * @param message Raw OSMData blob.
+     * @throws RuntimeException in case of protobuf parsing error.
+     */
     @Override
-    protected void read(byte[] message) {
+    protected void read(final byte[] message) {
         Osmformat.PrimitiveBlock primitives;
         try {
             primitives = Osmformat.PrimitiveBlock.parseFrom(message);
         } catch (InvalidProtocolBufferException e) {
-            logger.error("Error parsing OSMData block: {}", e.getMessage(), e);
+            log.error("Error parsing OSMData block: {}", e.getMessage(), e);
             throw new RuntimeException(e);
         }
+        stringTable = primitives.getStringtable();
         List<Osmformat.PrimitiveGroup> groups = primitives.getPrimitivegroupList();
-        for (Osmformat.PrimitiveGroup group: groups) {
-            if (parseNodes != null) {
-                Consumer<Osmformat.Node> nodeParser = makeNodeParser(primitives.getGranularity(), primitives.getLatOffset(), primitives.getLonOffset(), primitives.getStringtable());
+        for (Osmformat.PrimitiveGroup group : groups) {
+            if (nodesCb != null) {
+                Consumer<Osmformat.Node> nodeParser = makeNodeParser(primitives.getGranularity(), primitives.getLatOffset(), primitives.getLonOffset());
                 group.getNodesList().forEach(nodeParser);
                 if (group.hasDense()) {
-                    parseDenseNodes(group.getDense(), primitives.getGranularity(), primitives.getLatOffset(), primitives.getLonOffset(), primitives.getDateGranularity(), primitives.getStringtable());
+                    parseDenseNodes(group.getDense(), primitives.getGranularity(), primitives.getLatOffset(), primitives.getLonOffset(), primitives.getDateGranularity());
                 }
             }
-            if (parseWays != null) {
-                Consumer<Osmformat.Way> wayParser = makeWayParser(primitives.getStringtable());
-                group.getWaysList().forEach(wayParser);
+            if (waysCb != null) {
+                group.getWaysList().forEach(this::wayParser);
             }
-            if (parseRelations != null) {
-                Consumer<Osmformat.Relation> relationParser = makeRelationParser(primitives.getStringtable());
-                group.getRelationsList().forEach(relationParser);
+            if (relationsCb != null) {
+                group.getRelationsList().forEach(this::relationParser);
             }
-            if (parseChangesets != null) {
+            if (changesetsCb != null) {
                 group.getChangesetsList().forEach(changeMessage -> {
                     long id = changeMessage.getId();
-                    logger.debug("ChangeSet id: {}", id);
-                    parseChangesets.accept(id);
+                    log.debug("ChangeSet id: {}", id);
+                    changesetsCb.accept(id);
                 });
             }
         }
