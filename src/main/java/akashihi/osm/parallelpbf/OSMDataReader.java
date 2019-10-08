@@ -1,9 +1,11 @@
 package akashihi.osm.parallelpbf;
 
 import akashihi.osm.parallelpbf.entity.*;
+import akashihi.osm.parallelpbf.parser.RelationParser;
 import com.google.protobuf.InvalidProtocolBufferException;
 import crosby.binary.Osmformat;
 import lombok.extern.slf4j.Slf4j;
+import lombok.var;
 
 import java.util.HashMap;
 import java.util.List;
@@ -215,7 +217,8 @@ public class OSMDataReader extends OSMReader {
                 group.getWaysList().forEach(this::wayParser);
             }
             if (relationsCb != null) {
-                group.getRelationsList().forEach(this::relationParser);
+                var parser = new RelationParser<Osmformat.Relation, Consumer<Relation>>(relationsCb, stringTable);
+                group.getRelationsList().forEach(parser::parse);
             }
             if (changesetsCb != null) {
                 group.getChangesetsList().forEach(changeMessage -> {
