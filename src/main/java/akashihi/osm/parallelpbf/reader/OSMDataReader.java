@@ -99,11 +99,11 @@ public class OSMDataReader extends OSMReader {
                 }
             }
             if (waysCb != null) {
-                var parser = new WayParser<Osmformat.Way, Consumer<Way>>(waysCb, stringTable);
+                var parser = new WayParser(waysCb, stringTable);
                 group.getWaysList().forEach(parser::parse);
             }
             if (relationsCb != null) {
-                var parser = new RelationParser<Osmformat.Relation, Consumer<Relation>>(relationsCb, stringTable);
+                var parser = new RelationParser(relationsCb, stringTable);
                 group.getRelationsList().forEach(parser::parse);
             }
             if (changesetsCb != null) {

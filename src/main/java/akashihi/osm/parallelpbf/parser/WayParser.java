@@ -9,22 +9,20 @@ import java.util.function.Consumer;
 /**
  * Implements OSM Way parser.
  *
- * @param <M> PBF way type.
- * @param <T> Way typed callback.
  */
 @Slf4j
-public final class WayParser<M extends Osmformat.Way, T extends Consumer<Way>> extends BaseParser<M, T> {
+public final class WayParser extends BaseParser<Osmformat.Way, Consumer<Way>> {
     /**
      * Parent compatible constructor that sets callback and string table.
      * @param callback Callback to call on successful parse.
      * @param stringTable String table to use while parsing.
      */
-    public WayParser(final T callback, final Osmformat.StringTable stringTable) {
+    public WayParser(final Consumer<Way> callback, final Osmformat.StringTable stringTable) {
         super(callback, stringTable);
     }
 
     @Override
-    public void parse(final M message) {
+    public void parse(final Osmformat.Way message) {
         long nodeId = 0;
         Way way = new Way(message.getId());
         way.setTags(parseTags(message.getKeysList(), message.getValsList()));
