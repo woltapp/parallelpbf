@@ -1,6 +1,9 @@
 package akashihi.osm.parallelpbf;
 
-import akashihi.osm.parallelpbf.entity.*;
+import akashihi.osm.parallelpbf.entity.Node;
+import akashihi.osm.parallelpbf.entity.Relation;
+import akashihi.osm.parallelpbf.entity.Way;
+import akashihi.osm.parallelpbf.parser.NodeParser;
 import akashihi.osm.parallelpbf.parser.RelationParser;
 import akashihi.osm.parallelpbf.parser.WayParser;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -8,12 +11,14 @@ import crosby.binary.Osmformat;
 import lombok.extern.slf4j.Slf4j;
 import lombok.var;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 
+/**
+ * Implemented parser for OSMHeader message.
+ *
+ * @see akashihi.osm.parallelpbf.parser.BaseParser
+ */
 @Slf4j
 public class OSMDataReader extends OSMReader {
     /**
@@ -42,118 +47,27 @@ public class OSMDataReader extends OSMReader {
     private final Consumer<Relation> relationsCb;
 
     /**
-     * Blob's stringtable is published here during parse process.
+     * Configures reader with blob and callbacks.
+     * @param blob         blob to parse.
+     * @param tasksLimiter task limiting semaphore.
+     * @param onNodes Callback to call on node parse. May be null, in that case nodes parsing will be skipped.
+     * @param onWays Callback to call on way parse. May be null, in that case ways parsing will be skipped.
+     * @param onRelations Callback to call on relation parse. May be null,
+     *                    in that case relations parsing will be skipped.
+     * @param onChangesets Callback to call on changeset parse. May be null,
+     *                     in that case changesets parsing will be skipped.
      */
-    private Osmformat.StringTable stringTable;
-
-    OSMDataReader(final byte[] blob, final Semaphore tasksLimiter, final Consumer<Node> onNodes, final Consumer<Way> onWays, final Consumer<Relation> onRelations, final Consumer<Long> onChangesets) {
+    OSMDataReader(final byte[] blob,
+                  final Semaphore tasksLimiter,
+                  final Consumer<Node> onNodes,
+                  final Consumer<Way> onWays,
+                  final Consumer<Relation> onRelations,
+                  final Consumer<Long> onChangesets) {
         super(blob, tasksLimiter);
         this.nodesCb = onNodes;
         this.waysCb = onWays;
         this.relationsCb = onRelations;
         this.changesetsCb = onChangesets;
-    }
-
-    private Map<String, String> parseTags(final List<Integer> keys, final List<Integer> values) {
-        HashMap<String, String> result = new HashMap<>();
-        for (int indx = 0; indx < keys.size(); ++indx) {
-            String key = stringTable.getS(keys.get(indx)).toStringUtf8();
-            String value = stringTable.getS(values.get(indx)).toStringUtf8();
-            result.put(key, value);
-        }
-        return result;
-    }
-
-    private <M> Info parseInfo(final M message) {
-        Osmformat.Info infoMessage = null;
-        if (message instanceof Osmformat.Node) {
-            Osmformat.Node nodeMessage = (Osmformat.Node) message;
-            if (nodeMessage.hasInfo()) {
-                infoMessage = nodeMessage.getInfo();
-            }
-        }
-        if (message instanceof Osmformat.Way) {
-            Osmformat.Way wayMessage = (Osmformat.Way) message;
-            if (wayMessage.hasInfo()) {
-                infoMessage = wayMessage.getInfo();
-            }
-        }
-        if (message instanceof Osmformat.Relation) {
-            Osmformat.Relation relMessage = (Osmformat.Relation) message;
-            if (relMessage.hasInfo()) {
-                infoMessage = relMessage.getInfo();
-            }
-        }
-        if (infoMessage != null) {
-            String username = stringTable.getS(infoMessage.getUserSid()).toStringUtf8();
-            return new Info(infoMessage.getUid(), username, infoMessage.getVersion(), infoMessage.getTimestamp(), infoMessage.getChangeset(), infoMessage.getVisible());
-        }
-        return null;
-    }
-
-    private void parseDenseNodes(final Osmformat.DenseNodes nodes, final int granularity, final long latOffset, final long lonOffset, final int dateGranularity) {
-        int tagsKeyValuePointer = 0;
-        long id = 0;
-        double latitude = 0;
-        double longitude = 0;
-
-        long timestamp = 0;
-        long changeset = 0;
-        int uid = 0;
-        int usernameStringId = 0;
-        for (int indx = 0; indx < nodes.getIdCount(); indx++) {
-            id += nodes.getId(indx);
-            latitude += NANO * (latOffset + (granularity * nodes.getLat(indx)));
-            longitude += NANO * (lonOffset + (granularity * nodes.getLon(indx)));
-
-            Node node = new Node(id, latitude, longitude);
-            if (nodes.getKeysValsCount() > 0) {
-                while (true) {
-                    int keyIndex = nodes.getKeysVals(tagsKeyValuePointer);
-                    ++tagsKeyValuePointer;
-                    if (keyIndex == 0) {
-                        break;
-                    }
-                    int valueIndex = nodes.getKeysVals(tagsKeyValuePointer);
-                    ++tagsKeyValuePointer;
-                    String key = stringTable.getS(keyIndex).toStringUtf8();
-                    String value = stringTable.getS(valueIndex).toStringUtf8();
-                    node.getTags().put(key, value);
-                }
-            }
-            if (nodes.hasDenseinfo()) {
-                Osmformat.DenseInfo infoMessage = nodes.getDenseinfo();
-                uid += infoMessage.getUid(indx);
-                usernameStringId += infoMessage.getUserSid(indx);
-                String username = stringTable.getS(usernameStringId).toStringUtf8();
-                changeset += infoMessage.getChangeset(indx);
-                timestamp += infoMessage.getTimestamp(indx);
-                int version = infoMessage.getVersion(indx);
-                boolean visible;
-                if (infoMessage.getVisibleCount() > 0) {
-                    visible = infoMessage.getVisible(indx);
-                } else {
-                    visible = true;
-                }
-                Info info = new Info(uid, username, version, timestamp * dateGranularity, changeset, visible);
-                node.setInfo(info);
-            }
-            log.debug(node.toString());
-            nodesCb.accept(node);
-
-        }
-    }
-
-    private Consumer<Osmformat.Node> makeNodeParser(final int granularity, final long latOffset, final long lonOffset) {
-        return (nodeMessage) -> {
-            double latitude = NANO * (latOffset + (granularity * nodeMessage.getLat()));
-            double longitude = NANO * (lonOffset + (granularity * nodeMessage.getLon()));
-            Node node = new Node(nodeMessage.getId(), latitude, longitude);
-            node.setTags(parseTags(nodeMessage.getKeysList(), nodeMessage.getValsList()));
-            node.setInfo(parseInfo(nodeMessage));
-            log.debug(node.toString());
-            nodesCb.accept(node);
-        };
     }
 
     /**
@@ -174,14 +88,19 @@ public class OSMDataReader extends OSMReader {
             log.error("Error parsing OSMData block: {}", e.getMessage(), e);
             throw new RuntimeException(e);
         }
-        stringTable = primitives.getStringtable();
-        List<Osmformat.PrimitiveGroup> groups = primitives.getPrimitivegroupList();
+        var stringTable = primitives.getStringtable();
+        var groups = primitives.getPrimitivegroupList();
         for (Osmformat.PrimitiveGroup group : groups) {
             if (nodesCb != null) {
-                Consumer<Osmformat.Node> nodeParser = makeNodeParser(primitives.getGranularity(), primitives.getLatOffset(), primitives.getLonOffset());
-                group.getNodesList().forEach(nodeParser);
+                var parser = new NodeParser<Osmformat.Node, Consumer<Node>>(nodesCb,
+                        stringTable,
+                        primitives.getGranularity(),
+                        primitives.getLatOffset(),
+                        primitives.getLonOffset(),
+                        primitives.getDateGranularity());
+                group.getNodesList().forEach(parser::parse);
                 if (group.hasDense()) {
-                    parseDenseNodes(group.getDense(), primitives.getGranularity(), primitives.getLatOffset(), primitives.getLonOffset(), primitives.getDateGranularity());
+                    parser.parse(group.getDense());
                 }
             }
             if (waysCb != null) {
