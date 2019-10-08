@@ -2,7 +2,6 @@ package akashihi.osm.parallelpbf;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import crosby.binary.Fileformat;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.Semaphore;
@@ -18,7 +17,6 @@ import java.util.zip.Inflater;
  * executed on parallel.
  */
 @Slf4j
-@RequiredArgsConstructor
 public abstract class OSMReader implements Runnable {
     /**
      * Incoming blob to process.
@@ -33,6 +31,17 @@ public abstract class OSMReader implements Runnable {
      * do not overload thread pool.
      */
     private final Semaphore tasksLimiter;
+
+    /**
+     * Sets base parameters.
+     * @param blobValue The blob to parse.
+     * @param tasksLimiterValue Task limiting semaphore.
+     */
+    @SuppressWarnings("EI_EXPOSE_REP2")
+    OSMReader(final byte[] blobValue, final Semaphore tasksLimiterValue) {
+        this.blob = blobValue;
+        this.tasksLimiter = tasksLimiterValue;
+    }
 
     /**
      * Parses blob data by decompressing it, if needed and passing
