@@ -5,17 +5,16 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ParalelBinaryParserExample {
 
     private final StringBuilder output = new StringBuilder();
-    private AtomicInteger nodesCounter = new AtomicInteger();
-    private AtomicInteger waysCounter = new AtomicInteger();
-    private AtomicInteger relationsCounter = new AtomicInteger();
-    private AtomicInteger changesetsCounter = new AtomicInteger();
+    private AtomicLong nodesCounter = new AtomicLong();
+    private AtomicLong waysCounter = new AtomicLong();
+    private AtomicLong relationsCounter = new AtomicLong();
+    private AtomicLong changesetsCounter = new AtomicLong();
 
     private void processHeader(Header header) {
         synchronized (output) {
@@ -68,7 +67,7 @@ public class ParalelBinaryParserExample {
         System.out.println(output);
     }
 
-    private void execute() throws FileNotFoundException {
+    private void execute() {
         Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         root.setLevel(Level.TRACE);
 
@@ -84,7 +83,7 @@ public class ParalelBinaryParserExample {
                 .parse();
     }
 
-    public static void main(String[] args) throws FileNotFoundException {
+    public static void main(String[] args) {
         new ParalelBinaryParserExample().execute();
     }
 }
