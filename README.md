@@ -76,13 +76,26 @@ All callbacks are optional, if you do not set some callback, nothing will break.
 will be skipped. So, for example, if you need just relations data, you should not set other callbacks and data blocks carrying
 other types of OSM data will be skipped completely, thus saving processing time. 
 There is an exception from that rule - Header data block is always parsed, even if no callback is set.
+Even more, if no Node/Way/Relation/Changeset callbacks will be set,  actual processing of data will be skipped 
+after finding first Header block. 
 
-`ParallelBinaryParser` constructor accepts two arguments:
+`ParallelBinaryParser` constructor accepts two mandatory arguments:
 
 * `InputStream input` - InputStream pointing to the beginning of the OSMPBF data. 
 * `int threads` - Number of threads for parallel processing. Parser will automatically throttle and stop input 
 reading if all threads are busy. Each thread keeps blob data in memory, so memory usage will be at least
 64MB per thread, but probably couple of hundreds megabytes per thread, depending on a block content.
+
+There are also two optional arguments for partitioning support:
+
+* `noPartitions` - Total number of partitions processed file should be divided.
+* `myShard` - Number of partition, associated with the this instance of the parser.
+
+The partitioning is added to support multi-host parallel loading, when each hosts reads it's own amount of data 
+independently and then somehow combines that data or continues processing it on each hosts separately. The whole idea
+of partitioning here is that we split up the file to some number of partitions or shard and only process OSMData blocks  
+from our 'own' shard, skipping all data blocks belonging to the other shard. Even with partitioning enabled, the whole
+InputStream will be processed and all OSMHeader blocks will be read and analyzed.
 
 To start actually processing the input stream, you should call `parse()` function. It will create all required threads
 and start data reading from the input and parsing it. That function is intentionally blocking, but it is safe to 

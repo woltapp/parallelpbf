@@ -124,4 +124,23 @@ public final class BlobReader {
         return readFromStream(blobLength);
     }
 
+    /**
+     * Fast forwards input stream to the offset. Used in conjunction with
+     * partitioning.
+     * @param offset Number of bytes to skip from the stream.
+     * @return Optional with `offset` value or empty in case of failure.
+     */
+    public Optional<Integer> skip(final Integer offset) {
+        long left = offset;
+        try {
+            while (left != 0) {
+                long skipped = input.skip(left);
+                left -= skipped;
+            }
+            return Optional.of(offset);
+        } catch (IOException e) {
+            log.error("Error fast forwarding the stream: {}", e.getMessage(), e);
+            return Optional.empty();
+        }
+    }
 }

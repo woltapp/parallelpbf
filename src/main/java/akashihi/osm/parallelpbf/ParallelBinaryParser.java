@@ -6,6 +6,7 @@ import akashihi.osm.parallelpbf.reader.OSMDataReader;
 import akashihi.osm.parallelpbf.reader.OSMHeaderReader;
 import akashihi.osm.parallelpbf.reader.OSMReader;
 import lombok.extern.slf4j.Slf4j;
+import lombok.var;
 
 import java.io.InputStream;
 import java.util.LinkedList;
@@ -62,6 +63,22 @@ public final class ParallelBinaryParser {
      * Number of threads to use.
      */
     private final int threads;
+
+    /**
+     * Two parameters below are used to support sharding and partial file reading.
+     *
+     * The first one, partitions, tells the reader how many partitions exists in total.
+     */
+    private final int partitions;
+
+    /**
+     * Second one tells the reader, on which partitions it works. The reader will count
+     * seen OsmData blocks, divide them with number of partitions, get division remainder and if
+     * remainder is equal to reader's shard, block will be processed. Otherwise, reader will forward the input
+     * stream till next block.
+     */
+    private final int shard;
+
     /**
      * A submitted task limiter. While executor can limit number of running tasks to the number of runnign threads,
      * we do not want to submit to many tasks, as each task consumes some RAM for the blob data and OSM PBF can be
@@ -91,6 +108,12 @@ public final class ParallelBinaryParser {
      * After that executor (see above) will be destroyed and onComplete callback will be called.
      */
     private List<Future<?>> tasksInFlight = new LinkedList<>();
+
+    /**
+     * Data block counter for partitioning, starts with zero, so first data block (which is OsmHeader block)
+     * will be always processed.
+     */
+    private Integer currentDataBlock = 0;
 
     /**
      * Constructs reader from the blob information.
@@ -141,9 +164,17 @@ public final class ParallelBinaryParser {
      * awaited till end of the blob processing.
      */
     private Optional<? extends Future<?>> processDataBlob(final BlobInformation information) {
-        return reader.readBlob(information.getSize())
-                .flatMap(value -> makeReaderForBlob(value, information))
-                .flatMap(this::runReaderAsync);
+        int currentShard = currentDataBlock % partitions;
+        log.trace("Current shard: {}, current block: {}, my shard: {}", currentShard, currentDataBlock, shard);
+        currentDataBlock++;
+        if (currentShard == shard || information.getType().equals("OSMHeader")) {
+            return reader.readBlob(information.getSize())
+                    .flatMap(value -> makeReaderForBlob(value, information))
+                    .flatMap(this::runReaderAsync);
+        } else {
+            var skipped = reader.skip(information.getSize());
+            return skipped.map(CompletableFuture::completedFuture);
+        }
     }
 
     /**
@@ -158,6 +189,28 @@ public final class ParallelBinaryParser {
         reader = new BlobReader(input);
         threads = noThreads;
         tasksLimiter = new Semaphore(noThreads);
+        partitions = 1;
+        shard = 0;
+
+    }
+
+    /**
+     * Sets OSM PBF file to parse and number of threads to use.
+     * @param input Any inputstream pointing to the beginning of the OSM PBF data.
+     * @param noThreads Number of threads to use. The best results can be achieved when this value
+     *                  is set to number of available CPU cores or twice the number of available CPU cores.
+     *                  Each thread will use up to 64MB of ram to keep blob data and actually grow up to
+     *                  hundreds of megabytes.
+     * @param noPartitions Specifies how many partitions should be in the input stream.
+     * @param myShard Specifies id of partition, associated with this instance of the parser.
+     */
+    public ParallelBinaryParser(final InputStream input, final int noThreads,
+                                final int noPartitions, final int myShard) {
+        reader = new BlobReader(input);
+        threads = noThreads;
+        tasksLimiter = new Semaphore(noThreads);
+        partitions = noPartitions;
+        shard = myShard;
     }
 
     /**
@@ -261,6 +314,8 @@ public final class ParallelBinaryParser {
         }
 
         executor = Executors.newFixedThreadPool(threads);
+        currentDataBlock = 0;
+
         Optional<? extends Future<?>> blob;
         do {
             blob = reader.readBlobHeaderLength().flatMap(reader::readBlobHeader).flatMap(this::processDataBlob);
