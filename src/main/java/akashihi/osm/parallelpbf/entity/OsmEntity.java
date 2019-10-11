@@ -15,7 +15,7 @@ import java.util.Map;
  * @see Info
  */
 @Data
-abstract class OsmEntity {
+public abstract class OsmEntity {
     /**
      * Entry id.
      */

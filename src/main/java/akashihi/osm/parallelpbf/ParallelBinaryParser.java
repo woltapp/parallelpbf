@@ -352,6 +352,8 @@ public final class ParallelBinaryParser {
             log.error("Parsing failed with: {}", e.getMessage(), e);
             return;
         } finally {
+            //In case of exception we would like to kill all the tasks immediately
+            tasksInFlight.stream().filter(t -> !t.isDone()).forEach(t -> t.cancel(true));
             executor.shutdown();
             tasksInFlight.clear();
         }
