@@ -116,6 +116,10 @@ public final class ParallelBinaryParser {
     private Integer currentDataBlock = 0;
 
     /**
+     * Used in parse time, marks that header block was seen (but may not be processed yet).
+     */
+    private Boolean headerSeen = false;
+    /**
      * Constructs reader from the blob information.
      * @param blob OSMData blob to read
      * @param information Information describing OSMData blob above.
@@ -124,8 +128,13 @@ public final class ParallelBinaryParser {
     private Optional<OSMReader> makeReaderForBlob(final byte[] blob, final BlobInformation information) {
         switch (information.getType()) {
             case "OSMHeader":
+                headerSeen = true;
                 return Optional.of(new OSMHeaderReader(blob, tasksLimiter, headerCb, boundBoxCb));
             case "OSMData":
+                if (!headerSeen) {
+                    log.error("Got OSMData before OSMHeader");
+                    return Optional.empty();
+                }
                 return Optional.of(new OSMDataReader(blob, tasksLimiter, nodesCb, waysCb, relationsCb, changesetsCb));
             default:
                 return Optional.empty();
@@ -158,22 +167,28 @@ public final class ParallelBinaryParser {
     /**
      * Processses blob with osm data asynchronously.
      *
-     * @param information Blob's size and type
+     * @param information Blob's size and type,
      * @return Processing results in form of Optional Future. Empty Optional
      * means, that processing hasn't started, while Future can be
      * awaited till end of the blob processing.
      */
     private Optional<? extends Future<?>> processDataBlob(final BlobInformation information) {
-        int currentShard = currentDataBlock % partitions;
-        log.trace("Current shard: {}, current block: {}, my shard: {}", currentShard, currentDataBlock, shard);
-        currentDataBlock++;
-        if (currentShard == shard || information.getType().equals("OSMHeader")) {
-            return reader.readBlob(information.getSize())
-                    .flatMap(value -> makeReaderForBlob(value, information))
-                    .flatMap(this::runReaderAsync);
+        //Check, that we have listeners for the data blocks and stop processing, if no
+        if (nodesCb != null || waysCb != null || relationsCb != null || changesetsCb != null || !headerSeen) {
+
+            int currentShard = currentDataBlock % partitions;
+            log.trace("Current shard: {}, current block: {}, my shard: {}", currentShard, currentDataBlock, shard);
+            currentDataBlock++;
+            if (currentShard == shard || information.getType().equals("OSMHeader")) {
+                return reader.readBlob(information.getSize())
+                        .flatMap(value -> makeReaderForBlob(value, information))
+                        .flatMap(this::runReaderAsync);
+            } else {
+                var skipped = reader.skip(information.getSize());
+                return skipped.map(CompletableFuture::completedFuture);
+            }
         } else {
-            var skipped = reader.skip(information.getSize());
-            return skipped.map(CompletableFuture::completedFuture);
+            return Optional.empty();
         }
     }
 
@@ -315,6 +330,7 @@ public final class ParallelBinaryParser {
 
         executor = Executors.newFixedThreadPool(threads);
         currentDataBlock = 0;
+        headerSeen = false;
 
         Optional<? extends Future<?>> blob;
         do {
