@@ -4,12 +4,41 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>akashihi.osm</groupId>
+    <groupId>org.akashihi.osm</groupId>
     <artifactId>parallelpbf</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
+    <packaging>jar</packaging>
 
     <name>parallelpbf</name>
+    <description>OpenStreetMap PBF format multithreaded reader</description>
     <url>https://github.com/akashihi/parallelpbf</url>
+
+    <licenses>
+        <license>
+            <name>GPLv3</name>
+            <url>https://github.com/akashihi/parallelpbf/blob/master/LICENSE</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:https://github.com/akashihi/parallelpbf.git</connection>
+        <developerConnection>scm:git:https://github.com/akashihi/parallelpbf.git</developerConnection>
+        <url>https://github.com/akashihi/parallelpbf</url>
+        <tag>v0.1.0</tag>
+    </scm>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/
+            </url>
+        </repository>
+    </distributionManagement>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -180,6 +209,20 @@
                         <goals>
                             <goal>integration-test</goal>
                             <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
                         </goals>
                     </execution>
                 </executions>
