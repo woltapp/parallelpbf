@@ -17,19 +17,23 @@ is to distribute the work on all the cores. And here we go...
 
 ### Maven 
         
-        incomplete
+        <dependency>
+            <groupId>org.akashihi.osm</groupId>
+            <artifactId>parallelpbf</artifactId>
+            <version>0.1.1</version>
+        </dependency>
         
 ### Gradle
 
-        incomplete
+        compile group: 'org.akashihi.osm', name: 'parallelpbf', version: '0.1.1'
         
 ### SBT 
                         
-        incomplete
+        libraryDependencies += "org.akashihi.osm" % "parallelpbf" % "0.1.1"
         
 ### Github release
 
-        incomplete
+        https://github.com/akashihi/parallelpbf/releases/tag/v0.1.1
         
 ## Usage                
         
