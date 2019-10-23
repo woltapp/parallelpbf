@@ -200,7 +200,7 @@ public final class ParallelBinaryParser {
 
             int currentShard = currentDataBlock % partitions;
             log.trace("Current shard: {}, current block: {}, my shard: {}", currentShard, currentDataBlock, shard);
-            currentDataBlock++;
+            ++currentDataBlock;
             if (currentShard == shard || information.getType().equals("OSMHeader")) {
                 return reader.readBlob(information.getSize())
                         .flatMap(value -> makeReaderForBlob(value, information))
