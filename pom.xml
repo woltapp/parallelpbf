@@ -28,6 +28,15 @@
         <tag>v0.1.1</tag>
     </scm>
 
+    <developers>
+        <developer>
+            <name>Denis Chaplygin</name>
+            <email>denis.chaplygin@wolt.com</email>
+            <organization>Wolt enterprises oy</organization>
+            <organizationUrl>https://wolt.com/</organizationUrl>
+        </developer>
+    </developers>
+
     <issueManagement>
         <system>GitHub</system>
         <url>https://github.com/akashihi/parallelpbf/issues</url>
