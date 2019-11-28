@@ -42,5 +42,5 @@ public final class BoundBox {
     /**
      * Bigger latitude of a bounding gox.
      */
-    private final double botttom;
+    private final double bottom;
 }

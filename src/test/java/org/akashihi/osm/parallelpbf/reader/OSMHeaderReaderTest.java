@@ -110,7 +110,7 @@ class OSMHeaderReaderTest {
             assertEquals(1, bbox.getLeft(), 0.1);
             assertEquals(2, bbox.getTop(), 0.1);
             assertEquals(3, bbox.getRight(), 0.1);
-            assertEquals(4, bbox.getBotttom(), 0.1);
+            assertEquals(4, bbox.getBottom(), 0.1);
         };
         var testedObject = new OSMHeaderReader(blob, limiter, null, checker);
         testedObject.run();
