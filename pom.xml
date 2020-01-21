@@ -11,20 +11,20 @@
 
     <name>parallelpbf</name>
     <description>OpenStreetMap PBF format multithreaded reader</description>
-    <url>https://github.com/akashihi/parallelpbf</url>
+    <url>https://github.com/woltapp/parallelpbf</url>
 
     <licenses>
         <license>
             <name>GPLv3</name>
-            <url>https://github.com/akashihi/parallelpbf/blob/master/LICENSE</url>
+            <url>https://github.com/woltapp/parallelpbf/blob/master/LICENSE</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
 
     <scm>
-        <connection>scm:git:https://github.com/akashihi/parallelpbf.git</connection>
-        <developerConnection>scm:git:https://github.com/akashihi/parallelpbf.git</developerConnection>
-        <url>https://github.com/akashihi/parallelpbf</url>
+        <connection>scm:git:https://github.com/woltapp/parallelpbf.git</connection>
+        <developerConnection>scm:git:https://github.com/woltapp/parallelpbf.git</developerConnection>
+        <url>https://github.com/woltapp/parallelpbf</url>
         <tag>v0.1.1</tag>
     </scm>
 
@@ -39,7 +39,7 @@
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/akashihi/parallelpbf/issues</url>
+        <url>https://github.com/akashihi/woltapp/issues</url>
     </issueManagement>
 
     <distributionManagement>
