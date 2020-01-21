@@ -86,9 +86,7 @@ class OSMHeaderReaderTest {
                 .build().toByteArray();
         var blob = Fileformat.Blob.newBuilder().setRaw(ByteString.copyFrom(headerMessage)).build().toByteArray();
 
-        Consumer<BoundBox> checker = (bbox) -> {
-            fail("BoundBox is missing");
-        };
+        Consumer<BoundBox> checker = (bbox) -> fail("BoundBox is missing");
         var testedObject = new OSMHeaderReader(blob, limiter, null, checker);
         testedObject.run();
     }

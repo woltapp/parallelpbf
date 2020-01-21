@@ -17,7 +17,6 @@
 
 package com.wolt.osm.parallelpbf.reader;
 
-import com.wolt.osm.parallelpbf.parser.*;
 import com.wolt.osm.parallelpbf.entity.Node;
 import com.wolt.osm.parallelpbf.entity.Relation;
 import com.wolt.osm.parallelpbf.entity.Way;

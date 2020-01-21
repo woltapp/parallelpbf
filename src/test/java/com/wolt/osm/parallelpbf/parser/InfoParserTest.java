@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Tag("BaseParser")
 class InfoParserTest {
 
-    class InfoParser extends BaseParser<Object, Consumer<Object>> {
+    static class InfoParser extends BaseParser<Object, Consumer<Object>> {
 
         public InfoParser(Consumer<Object> callback, Osmformat.StringTable stringTable) {
             super(callback, stringTable);
