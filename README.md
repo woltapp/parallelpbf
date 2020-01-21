@@ -18,22 +18,22 @@ is to distribute the work on all the cores. And here we go...
 ### Maven 
         
         <dependency>
-            <groupId>org.akashihi.osm</groupId>
+            <groupId>com.wolt.osm</groupId>
             <artifactId>parallelpbf</artifactId>
-            <version>0.1.1</version>
+            <version>0.2.0</version>
         </dependency>
         
 ### Gradle
 
-        compile group: 'org.akashihi.osm', name: 'parallelpbf', version: '0.1.1'
+        compile group: 'com.wolt.osm', name: 'parallelpbf', version: '0.2.0'
         
 ### SBT 
                         
-        libraryDependencies += "org.akashihi.osm" % "parallelpbf" % "0.1.1"
+        libraryDependencies += "com.wolt.osm" % "parallelpbf" % "0.2.0"
         
 ### Github release
 
-        https://github.com/akashihi/parallelpbf/releases/tag/v0.1.1
+        https://github.com/woltapp/parallelpbf/releases/tag/v0.2.0
         
 ## Usage                
         
