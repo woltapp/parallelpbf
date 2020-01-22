@@ -54,7 +54,7 @@ public final class BlobReader {
     private final InputStream input;
 
     /**
-     * Just tries to read specified amount of bytes from the stream.
+     * Tries to read specified amount of bytes from the stream.
      * @param bytesToRead how many bytes should be read.
      * @return Buffer of bytesToRead size or empty,
      *         in case of EOF or IOException.

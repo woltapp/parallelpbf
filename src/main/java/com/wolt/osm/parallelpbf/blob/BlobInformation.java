@@ -26,6 +26,8 @@ import lombok.Data;
  */
 @Data
 public class BlobInformation {
+    public static final String TYPE_OSM_DATA = "OSMData";
+    public static final String TYPE_OSM_HEADER = "OSMHeader";
     /**
      * Data blob size.
      */

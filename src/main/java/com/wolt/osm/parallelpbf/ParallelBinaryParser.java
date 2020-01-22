@@ -149,15 +149,15 @@ public final class ParallelBinaryParser {
      */
     private Optional<OSMReader> makeReaderForBlob(final byte[] blob, final BlobInformation information) {
         switch (information.getType()) {
-            case "OSMHeader":
-                headerSeen = true;
-                return Optional.of(new OSMHeaderReader(blob, tasksLimiter, headerCb, boundBoxCb));
-            case "OSMData":
+            case BlobInformation.TYPE_OSM_DATA:
                 if (!headerSeen) {
                     log.error("Got OSMData before OSMHeader");
                     return Optional.empty();
                 }
                 return Optional.of(new OSMDataReader(blob, tasksLimiter, nodesCb, waysCb, relationsCb, changesetsCb));
+            case BlobInformation.TYPE_OSM_HEADER:
+                headerSeen = true;
+                return Optional.of(new OSMHeaderReader(blob, tasksLimiter, headerCb, boundBoxCb));
             default:
                 return Optional.empty();
         }
