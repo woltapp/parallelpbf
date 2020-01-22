@@ -1,6 +1,8 @@
 package com.wolt.osm.parallelpbf;
 
+import com.wolt.osm.parallelpbf.blob.BlobInformation;
 import com.wolt.osm.parallelpbf.blob.BlobWriter;
+import com.wolt.osm.parallelpbf.encoder.OsmHeaderEncoder;
 import com.wolt.osm.parallelpbf.entity.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,6 +33,10 @@ public class ParallelBinaryWriter implements Closeable {
      */
     private final LinkedBlockingQueue<OsmEntity> writeQueue;
 
+    private boolean writeHeader(final BoundBox boundBox) {
+        return writer.write(OsmHeaderEncoder.encodeHeader(boundBox), BlobInformation.TYPE_OSM_HEADER);
+    }
+
     /**
      * Sets OSM PBF file to write and number of threads to use.
      *
@@ -45,6 +51,7 @@ public class ParallelBinaryWriter implements Closeable {
         this.threads = noThreads;
         this.writer = new BlobWriter(outputStream);
         writeQueue = new LinkedBlockingQueue<>(noThreads);
+        writeHeader(boundBox);
     }
 
     /**
@@ -61,6 +68,7 @@ public class ParallelBinaryWriter implements Closeable {
         this.threads = noThreads;
         this.writer = new BlobWriter(outputStream);
         writeQueue = new LinkedBlockingQueue<>(noThreads);
+        writeHeader(null);
     }
 
     /**
