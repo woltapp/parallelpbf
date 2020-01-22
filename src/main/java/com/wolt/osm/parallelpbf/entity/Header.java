@@ -26,6 +26,24 @@ import java.util.List;
  */
 @Data
 public class Header {
+    /*
+    Definition os OSM PBF features. See https://wiki.openstreetmap.org/wiki/PBF_Format for details.
+     */
+    /**
+     * "OsmSchema-V0.6" — File contains data with the OSM v0.6 schema.
+     */
+    public static final String FEATURE_OSM_SCHEMA = "OsmSchema-V0.6";
+
+    /**
+     * "DenseNodes" — File contains dense nodes and dense info.
+     */
+    public static final String FEATURE_DENSE_NODES = "DenseNodes";
+
+    /**
+     * "HistoricalInformation" — File contains historical OSM data.
+     */
+    public static final String FEATURE_HISTORICAL_INFORMATION = "HistoricalInformation";
+
     /**
      * List of features, required to read and process PBF data.
      */

@@ -77,9 +77,9 @@ public final class OSMHeaderReader extends OSMReader {
      */
     private boolean checkRequiredFeatures(final List<String> features) {
         Optional<String> unsupported = features.stream()
-                .filter(f -> !f.equalsIgnoreCase("OsmSchema-V0.6"))
-                .filter(f -> !f.equalsIgnoreCase("DenseNodes"))
-                .filter(f -> !f.equalsIgnoreCase("HistoricalInformation"))
+                .filter(f -> !f.equalsIgnoreCase(Header.FEATURE_OSM_SCHEMA))
+                .filter(f -> !f.equalsIgnoreCase(Header.FEATURE_DENSE_NODES))
+                .filter(f -> !f.equalsIgnoreCase(Header.FEATURE_HISTORICAL_INFORMATION))
                 .findAny();
         unsupported.ifPresent(s -> log.error("Unsupported required feature found: {}", s));
         return !unsupported.isPresent();
