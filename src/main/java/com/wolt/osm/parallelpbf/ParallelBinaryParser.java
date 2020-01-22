@@ -19,9 +19,9 @@ package com.wolt.osm.parallelpbf;
 
 import com.wolt.osm.parallelpbf.blob.BlobInformation;
 import com.wolt.osm.parallelpbf.blob.BlobReader;
-import com.wolt.osm.parallelpbf.reader.OSMDataReader;
-import com.wolt.osm.parallelpbf.reader.OSMHeaderReader;
-import com.wolt.osm.parallelpbf.reader.OSMReader;
+import com.wolt.osm.parallelpbf.io.OSMDataReader;
+import com.wolt.osm.parallelpbf.io.OSMHeaderReader;
+import com.wolt.osm.parallelpbf.io.OSMReader;
 import com.wolt.osm.parallelpbf.entity.Relation;
 import com.wolt.osm.parallelpbf.entity.Node;
 import com.wolt.osm.parallelpbf.entity.Way;

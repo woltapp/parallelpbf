@@ -26,7 +26,14 @@ import lombok.Data;
  */
 @Data
 public class BlobInformation {
+    /* OSM PBF Fileformat block types. See https://wiki.openstreetmap.org/wiki/PBF_Format for the details */
+    /**
+     * OSMData type block.
+     */
     public static final String TYPE_OSM_DATA = "OSMData";
+    /**
+     * OSMHeader type block.
+     */
     public static final String TYPE_OSM_HEADER = "OSMHeader";
     /**
      * Data blob size.

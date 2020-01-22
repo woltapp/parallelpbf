@@ -16,6 +16,6 @@
  */
 
 /**
- * Binary blobs reading and processing.
+ * Binary blobs reading, writing and processing.
  */
-package com.wolt.osm.parallelpbf.reader;
+package com.wolt.osm.parallelpbf.io;

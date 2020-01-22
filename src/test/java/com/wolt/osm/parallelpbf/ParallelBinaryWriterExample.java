@@ -1,9 +1,7 @@
-package com.wolt.osm.parallelpbf.reader;
+package com.wolt.osm.parallelpbf;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import com.wolt.osm.parallelpbf.ParallelBinaryParser;
-import com.wolt.osm.parallelpbf.ParallelBinaryWriter;
 import com.wolt.osm.parallelpbf.entity.*;
 import lombok.SneakyThrows;
 import org.slf4j.LoggerFactory;
@@ -46,7 +44,7 @@ public class ParallelBinaryWriterExample {
         outputFile.createNewFile();
         OutputStream output = new FileOutputStream(outputFile);
 
-        writer = new ParallelBinaryWriter(output,1);
+        writer = new ParallelBinaryWriter(output,1, null);
 
         InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream("sample.pbf");
         new ParallelBinaryParser(input, 1)

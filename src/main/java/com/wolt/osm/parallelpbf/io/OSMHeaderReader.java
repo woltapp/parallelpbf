@@ -15,7 +15,7 @@
  *     along with Foobar.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.wolt.osm.parallelpbf.reader;
+package com.wolt.osm.parallelpbf.io;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import crosby.binary.Osmformat;

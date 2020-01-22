@@ -3,12 +3,15 @@ package com.wolt.osm.parallelpbf;
 import com.wolt.osm.parallelpbf.blob.BlobInformation;
 import com.wolt.osm.parallelpbf.blob.BlobWriter;
 import com.wolt.osm.parallelpbf.encoder.OsmHeaderEncoder;
-import com.wolt.osm.parallelpbf.entity.*;
+import com.wolt.osm.parallelpbf.entity.BoundBox;
+import com.wolt.osm.parallelpbf.entity.OsmEntity;
+import com.wolt.osm.parallelpbf.io.OSMWriter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -19,11 +22,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 @Slf4j
 public class ParallelBinaryWriter implements Closeable {
     /**
-     * Number of threads to use.
-     */
-    private final int threads;
-
-    /**
      * Output writer.
      */
     private final BlobWriter writer;
@@ -33,6 +31,16 @@ public class ParallelBinaryWriter implements Closeable {
      */
     private final LinkedBlockingQueue<OsmEntity> writeQueue;
 
+    /**
+     * List of worker threads.
+     */
+    private final LinkedList<Thread> workers = new LinkedList<>();
+
+    /**
+     * Header writing procedure.
+     * @param boundBox Optional bounding box to include into header.
+     * @return false in case of error, true otherwise.
+     */
     private boolean writeHeader(final BoundBox boundBox) {
         return writer.write(OsmHeaderEncoder.encodeHeader(boundBox), BlobInformation.TYPE_OSM_HEADER);
     }
@@ -48,27 +56,16 @@ public class ParallelBinaryWriter implements Closeable {
      * @param boundBox     Output file bbox.
      */
     public ParallelBinaryWriter(final OutputStream outputStream, final int noThreads, final BoundBox boundBox) {
-        this.threads = noThreads;
         this.writer = new BlobWriter(outputStream);
         writeQueue = new LinkedBlockingQueue<>(noThreads);
-        writeHeader(boundBox);
-    }
-
-    /**
-     * Sets OSM PBF file to write and number of threads to use. This version will not
-     * write bounding box to the header.
-     *
-     * @param outputStream Any OutputStream pointing to the file to write OSM PBF data.
-     * @param noThreads    Number of threads to use. The best results can be achieved when this value
-     *                     is set to number of available CPU cores or twice the number of available CPU cores.
-     *                     Each thread will use up to 192MB of ram to keep blob data and actually may grow up to
-     *                     several hundreds of megabytes.
-     */
-    public ParallelBinaryWriter(final OutputStream outputStream, final int noThreads) {
-        this.threads = noThreads;
-        this.writer = new BlobWriter(outputStream);
-        writeQueue = new LinkedBlockingQueue<>(noThreads);
-        writeHeader(null);
+        if (!writeHeader(boundBox)) {
+            throw new RuntimeException("Error while creating writer and writing header");
+        }
+        for (int indx = 0; indx < noThreads; ++indx) {
+            Thread worker = new Thread(new OSMWriter(writer, writeQueue));
+            worker.start();
+            workers.push(worker);
+        }
     }
 
     /**
@@ -85,26 +82,22 @@ public class ParallelBinaryWriter implements Closeable {
             return false;
         }
         return true;
-        /*if (entity instanceof Node) {
-            Node node = (Node) entity;
-            write(node);
-        } else if (entity instanceof Way) {
-            Way way = (Way) entity;
-            write(way);
-        } else if (entity instanceof Relation) {
-            Relation relation = (Relation) entity;
-            write(relation);
-        } else {
-            log.error("Unknown entity type: {}", entity);
-        }*/
     }
 
     /**
      * Finishes OSM PBF file. **Must** be called or file may be left unfinished.
+     *
      * @throws IOException When something goes wrong.
      */
     @Override
     public void close() throws IOException {
-
+        workers.forEach((worker) -> {
+            worker.interrupt();
+            try {
+                worker.join();
+            } catch (InterruptedException e) {
+                log.warn("Interrupted while waiting for OSMWriter to stop");
+            }
+        });
     }
 }
