@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 /**
  * Parallel OSM PBF format parser.
  *
- * See https://github.com/akashihi/parallelpbf for the details and usage example.
+ * See https://github.com/woltapp/parallelpbf for the details and usage example.
  */
 @Slf4j
 public final class ParallelBinaryParser {
@@ -219,8 +219,8 @@ public final class ParallelBinaryParser {
      * @param input Any inputstream pointing to the beginning of the OSM PBF data.
      * @param noThreads Number of threads to use. The best results can be achieved when this value
      *                  is set to number of available CPU cores or twice the number of available CPU cores.
-     *                  Each thread will use up to 64MB of ram to keep blob data and actually grow up to
-     *                  hundreds of megabytes.
+     *                  Each thread will use up to 64MB of ram to keep blob data and actually may grow up to
+     *                  several hundreds of megabytes.
      */
     public ParallelBinaryParser(final InputStream input, final int noThreads) {
         reader = new BlobReader(input);
