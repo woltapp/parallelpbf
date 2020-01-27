@@ -14,19 +14,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class BlobWriterTest {
     @Test
-    void testInvalidType() {
-        BlobWriter testedObject = new BlobWriter(new ByteArrayOutputStream());
-
-        assertFalse(testedObject.write(new byte[1], "fail"));
-    }
-
-    @Test
     void testWriter() throws InvalidProtocolBufferException, DataFormatException {
         String expected = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt";
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
         BlobWriter testedObject = new BlobWriter(output);
-        assertTrue(testedObject.write(expected.getBytes()));
+        assertTrue(testedObject.writeData(expected.getBytes()));
 
         byte[] data = output.toByteArray();
 
@@ -58,7 +51,7 @@ class BlobWriterTest {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
         BlobWriter testedObject = new BlobWriter(output);
-        assertTrue(testedObject.write(new byte[1], BlobInformation.TYPE_OSM_HEADER));
+        assertTrue(testedObject.writeHeader(new byte[1]));
 
         byte[] data = output.toByteArray();
 

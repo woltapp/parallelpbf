@@ -1,6 +1,5 @@
 package com.wolt.osm.parallelpbf;
 
-import com.wolt.osm.parallelpbf.blob.BlobInformation;
 import com.wolt.osm.parallelpbf.blob.BlobWriter;
 import com.wolt.osm.parallelpbf.encoder.OsmHeaderEncoder;
 import com.wolt.osm.parallelpbf.entity.BoundBox;
@@ -42,7 +41,7 @@ public class ParallelBinaryWriter implements Closeable {
      * @return false in case of error, true otherwise.
      */
     private boolean writeHeader(final BoundBox boundBox) {
-        return writer.write(OsmHeaderEncoder.encodeHeader(boundBox), BlobInformation.TYPE_OSM_HEADER);
+        return writer.writeHeader(OsmHeaderEncoder.encodeHeader(boundBox));
     }
 
     /**

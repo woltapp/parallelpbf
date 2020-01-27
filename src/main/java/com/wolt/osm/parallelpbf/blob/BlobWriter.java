@@ -13,7 +13,7 @@ import java.util.zip.Deflater;
 /**
  * Fileformat writer. Should be shared between all the OSMWriters
  * as it owns single OutputStream.
- *
+ * <p>
  * Accepts blob to write with the type and serializes it to the
  * output stream. Writing to the stream is synchronized, so it
  * is thread safe.
@@ -31,56 +31,17 @@ public class BlobWriter {
     private final OutputStream output;
 
     /**
-     * Shortcut for writing OSMData block.
-     * @param blob binary blob to write.
+     * Blob writing helper. Adds headerBlob and size to the stream.
+     * Stream is locked during output operation.
+     * @param blob Blob to write.
+     * @param type Type of that blob.
      * @return false in case of error, true otherwise.
      */
-    public boolean write(final byte[] blob) {
-        return write(blob, BlobInformation.TYPE_OSM_DATA);
-    }
-
-    /**
-     * Writes blob to the OutputStream. Blob will be compressed, if
-     * applicable, prepended with HeaderBlob and its size.
-     * OutputFileStream will be locked during IO operation.
-     * @param blob biary blob to write.
-     * @param type Type of the blob.
-     * @return false in case of error, true otherwise.
-     */
-    public boolean write(final byte[] blob, final String type) {
-        boolean compress;
-        if (BlobInformation.TYPE_OSM_DATA.equals(type)) {
-            compress = true;
-        } else if (BlobInformation.TYPE_OSM_HEADER.equals(type)) {
-            compress = false;
-        } else {
-            log.error("Unsupported Blob type: {}", type);
-            return false;
-        }
-
-        // Form DataBlob
-        byte[] dataBlob;
-        if (compress) {
-            Deflater compressor = new Deflater(Deflater.BEST_COMPRESSION);
-            byte[] compressedBlob = new byte[blob.length];
-            compressor.setInput(blob);
-            compressor.finish();
-            int compressedBlobLength = compressor.deflate(compressedBlob);
-            compressor.end();
-            dataBlob = Fileformat.Blob.newBuilder()
-                    .setRawSize(blob.length)
-                    .setZlibData(ByteString.copyFrom(compressedBlob, 0, compressedBlobLength))
-                    .build().toByteArray();
-        } else {
-            dataBlob = Fileformat.Blob.newBuilder()
-                    .setRaw(ByteString.copyFrom(blob))
-                    .build().toByteArray();
-        }
-
+    private boolean write(final byte[] blob, final String type) {
         // Form headerBlob
         byte[] headerBlob = Fileformat.BlobHeader.newBuilder()
                 .setType(type)
-                .setDatasize(dataBlob.length)
+                .setDatasize(blob.length)
                 .build().toByteArray();
 
         // Get size of the headerBlob
@@ -91,12 +52,53 @@ public class BlobWriter {
             try {
                 output.write(size);
                 output.write(headerBlob);
-                output.write(dataBlob);
+                output.write(blob);
             } catch (IOException e) {
                 log.error("Error while writing data blob: {}", e.getMessage(), e);
                 return false;
             }
         }
         return true;
+    }
+
+    /**
+     * Writes data blob to the OutputStream. Blob will be compresed, prepended with HeaderBlob
+     * and its size.
+     * OutputFileStream will be locked during IO operation.
+     *
+     * @param blob binary blob to write.
+     * @return false in case of error, true otherwise.
+     */
+    public boolean writeData(final byte[] blob) {
+        // Form DataBlob
+        Deflater compressor = new Deflater(Deflater.BEST_COMPRESSION);
+        byte[] compressedBlob = new byte[blob.length];
+        compressor.setInput(blob);
+        compressor.finish();
+        int compressedBlobLength = compressor.deflate(compressedBlob);
+        compressor.end();
+        byte[] dataBlob = Fileformat.Blob.newBuilder()
+                .setRawSize(blob.length)
+                .setZlibData(ByteString.copyFrom(compressedBlob, 0, compressedBlobLength))
+                .build().toByteArray();
+
+        return write(dataBlob, BlobInformation.TYPE_OSM_DATA);
+    }
+
+    /**
+     * Writes header blob to the OutputStream. Blob will be  prepended with HeaderBlob
+     * and its size.
+     * OutputFileStream will be locked during IO operation.
+     *
+     * @param blob binary blob to write.
+     * @return false in case of error, true otherwise.
+     */
+    public boolean writeHeader(final byte[] blob) {
+        // Form DataBlob
+        byte[] dataBlob = Fileformat.Blob.newBuilder()
+                    .setRaw(ByteString.copyFrom(blob))
+                    .build().toByteArray();
+
+        return write(dataBlob, BlobInformation.TYPE_OSM_HEADER);
     }
 }
