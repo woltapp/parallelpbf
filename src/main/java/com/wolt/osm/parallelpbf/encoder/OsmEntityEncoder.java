@@ -36,7 +36,7 @@ public abstract class OsmEntityEncoder extends OsmEncoder {
      * @param str String to add.
      * @return String index in table.
      */
-    protected int addStringToTable(final String str) {
+    private int addStringToTable(final String str) {
         stringTableSize = stringTableSize + str.length();
         strings.addS(ByteString.copyFromUtf8(str));
         return ++stringIndex;
