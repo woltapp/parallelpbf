@@ -15,7 +15,7 @@ class DenseNodesEncoderTest {
         node.getTags().put("test", "test");
 
         DenseNodesEncoder testedObject = new DenseNodesEncoder();
-        testedObject.addNode(node);
+        testedObject.add(node);
 
         assertEquals(40, testedObject.estimateSize());
     }
@@ -27,7 +27,7 @@ class DenseNodesEncoderTest {
         node.getTags().put(str, str);
 
         DenseNodesEncoder testedObject = new DenseNodesEncoder();
-        testedObject.addNode(node);
+        testedObject.add(node);
         byte[] blob = testedObject.write();
 
         Osmformat.PrimitiveBlock actual = Osmformat.PrimitiveBlock.parseFrom(blob);
@@ -61,9 +61,9 @@ class DenseNodesEncoderTest {
         node3.getTags().put(str, str);
 
         DenseNodesEncoder testedObject = new DenseNodesEncoder();
-        testedObject.addNode(node1);
-        testedObject.addNode(node2);
-        testedObject.addNode(node3);
+        testedObject.add(node1);
+        testedObject.add(node2);
+        testedObject.add(node3);
 
         byte[] blob = testedObject.write();
 
@@ -89,8 +89,8 @@ class DenseNodesEncoderTest {
         node.getTags().put(str, str);
 
         DenseNodesEncoder testedObject = new DenseNodesEncoder();
-        testedObject.addNode(node);
+        testedObject.add(node);
         testedObject.write();
-        assertThrows(IllegalStateException.class, () -> testedObject.addNode(node));
+        assertThrows(IllegalStateException.class, () -> testedObject.add(node));
     }
 }

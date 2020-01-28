@@ -10,7 +10,7 @@ import crosby.binary.Osmformat;
  * Encoder is stateful and can't be used after 'write' call is issued.
  * Encoder is not thread-safe.
  */
-public final class WayEncoder extends OsmEntityEncoder {
+public final class WayEncoder extends OsmEntityEncoder<Way> {
     /**
      * Single member entry (key or value) is a long value,
      * so 8 bytes per entry.
@@ -49,7 +49,9 @@ public final class WayEncoder extends OsmEntityEncoder {
     /**
      * Add wy to the encoder.
      * @param w Way to add.
+     * @throws IllegalStateException when call after write() call.
      */
+    @Override
     public void add(final Way w) {
         if (built) {
             throw new IllegalStateException("Encoder content is already written");

@@ -2,6 +2,7 @@ package com.wolt.osm.parallelpbf.io;
 
 import com.wolt.osm.parallelpbf.blob.BlobWriter;
 import com.wolt.osm.parallelpbf.encoder.DenseNodesEncoder;
+import com.wolt.osm.parallelpbf.encoder.OsmEntityEncoder;
 import com.wolt.osm.parallelpbf.encoder.WayEncoder;
 import com.wolt.osm.parallelpbf.entity.Node;
 import com.wolt.osm.parallelpbf.entity.OsmEntity;
@@ -39,55 +40,56 @@ public final class OSMWriter implements Runnable {
     /**
      * Current(!) densenodes block encoder.
      */
-    private DenseNodesEncoder nodesEncoder;
+    private OsmEntityEncoder<Node> nodesEncoder;
 
     /**
      * Current(!) ways block encoder.
      */
-    private WayEncoder wayEncoder;
+    private OsmEntityEncoder<Way> wayEncoder;
 
     /**
      * Writes contents of dense nodes encoder to the writer
      * and resets encoder.
+     * @param <T> Type of encoder to flush.
+     * @param encoder OsmEntityEncoder to flush.
+     * @param encoderReset callback to the encoder reset procedure.
      */
-    private void flushNodes() {
-        byte[] blob = nodesEncoder.write();
+    private <T extends OsmEntity> void flush(final OsmEntityEncoder<T> encoder, final Runnable encoderReset) {
+        byte[] blob = encoder.write();
         writer.writeData(blob);
-        nodesEncoder = new DenseNodesEncoder();
+        encoderReset.run();
     }
 
     /**
-     * Writes node to the encoder and flushes to the
+     * Writes entity to the encoder and flushes to the
      * writer in case of hitting size limit.
-     * @param node Node do write.
+     * @param <T> Type of entity to write.
+     * @param entity entity do write.
+     * @param encoder encoder to use.
+     * @param encoderReset callback to the encoder reset procedure.
      */
-    private void write(final Node node) {
-        nodesEncoder.addNode(node);
-        if (nodesEncoder.estimateSize() > LIMIT_BLOB_SIZE) {
-            flushNodes();
+    private <T extends OsmEntity> void write(
+            final T entity,
+            final OsmEntityEncoder<T> encoder,
+            final Runnable encoderReset) {
+        encoder.add(entity);
+        if (encoder.estimateSize() > LIMIT_BLOB_SIZE) {
+            flush(encoder, encoderReset);
         }
     }
 
     /**
-     * Writes contents of way encoder to the writer
-     * and resets encoder.
+     * NodesEncoder reset/create function.
      */
-    private void flushWay() {
-        byte[] blob = wayEncoder.write();
-        writer.writeData(blob);
-        wayEncoder = new WayEncoder();
+    private void nodesReset() {
+        this.nodesEncoder = new DenseNodesEncoder();
     }
 
     /**
-     * Writes ways to the encoder and flushes to the
-     * writer in case of hitting size limit.
-     * @param way Way to write.
+     * WaysEncoder reset/create function.
      */
-    private void write(final Way way) {
-        wayEncoder.add(way);
-        if (wayEncoder.estimateSize() > LIMIT_BLOB_SIZE) {
-            flushWay();
-        }
+    private void wayReset() {
+        this.wayEncoder = new WayEncoder();
     }
 
     /**
@@ -98,7 +100,7 @@ public final class OSMWriter implements Runnable {
     public OSMWriter(final BlobWriter output, final LinkedBlockingQueue<OsmEntity> queue) {
         this.writer = output;
         this.writeQueue = queue;
-        nodesEncoder = new DenseNodesEncoder();
+        nodesReset();
         wayEncoder = new WayEncoder();
     }
 
@@ -109,9 +111,9 @@ public final class OSMWriter implements Runnable {
             try {
                 OsmEntity entity = writeQueue.take();
                 if (entity instanceof Node) {
-                    write((Node) entity);
+                    write((Node) entity, nodesEncoder, this::nodesReset);
                 } else if (entity instanceof Way) {
-                    write((Way) entity);
+                    write((Way) entity, wayEncoder, this::wayReset);
                 } else if (entity instanceof Relation) {
                     Relation relation = (Relation) entity;
                     //write(relation);
@@ -121,10 +123,10 @@ public final class OSMWriter implements Runnable {
 
             } catch (InterruptedException e) {
                 if (nodesEncoder.estimateSize() > 0) {
-                    flushNodes();
+                    flush(nodesEncoder, this::nodesReset);
                 }
                 if (wayEncoder.estimateSize() > 0) {
-                    flushWay();
+                    flush(wayEncoder, this::wayReset);
                 }
                 log.debug("OSMWriter requested to stop");
                 return;

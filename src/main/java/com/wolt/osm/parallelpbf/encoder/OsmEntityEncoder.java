@@ -1,6 +1,7 @@
 package com.wolt.osm.parallelpbf.encoder;
 
 import com.google.protobuf.ByteString;
+import com.wolt.osm.parallelpbf.entity.OsmEntity;
 import crosby.binary.Osmformat;
 
 import java.util.HashMap;
@@ -8,8 +9,9 @@ import java.util.Map;
 
 /**
  * Entity specific extension of OsmEncoder.
+ * @param <T> Type of entity that encoder supports.
  */
-public abstract class OsmEntityEncoder extends OsmEncoder {
+public abstract class OsmEntityEncoder<T extends OsmEntity> extends OsmEncoder {
     /**
      * Keeps current maximum string index value.
      */
@@ -76,6 +78,13 @@ public abstract class OsmEntityEncoder extends OsmEncoder {
     }
 
     /**
+     * Add entity to the encoder.
+     * @param entity Entity to add.
+     * @throws IllegalStateException when call after write() call.
+     */
+    public abstract void add(T entity);
+
+    /**
      * Provides approximate size of the future blob.
      * @return Estimated approximate maximum size of a blob.
      */
@@ -87,5 +96,4 @@ public abstract class OsmEntityEncoder extends OsmEncoder {
      * @return OSM PBF primitiveBlock blob.
      */
     public abstract byte[] write();
-
 }

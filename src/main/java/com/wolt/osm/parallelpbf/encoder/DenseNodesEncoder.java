@@ -10,7 +10,7 @@ import crosby.binary.Osmformat;
  * Encoder is stateful and can't be used after 'write' call is issued.
  * Encoder is not thread-safe.
  */
-public final class DenseNodesEncoder extends OsmEntityEncoder {
+public final class DenseNodesEncoder extends OsmEntityEncoder<Node> {
     /**
      * Coordinates grid default granularity.
      */
@@ -59,7 +59,8 @@ public final class DenseNodesEncoder extends OsmEntityEncoder {
      * @param node Node to add.
      * @throws IllegalStateException when call after write() call.
      */
-    public void addNode(final Node node) {
+    @Override
+    public void add(final Node node) {
         if (built) {
             throw new IllegalStateException("Encoder content is already written");
         }
