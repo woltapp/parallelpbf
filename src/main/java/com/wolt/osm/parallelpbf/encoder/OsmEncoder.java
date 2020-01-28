@@ -11,6 +11,12 @@ public abstract class OsmEncoder {
     protected static final int TAG_ENTRY_SIZE = 4;
 
     /**
+     * Single member entry (key or value) is a long value,
+     * so 8 bytes per entry keeping both of them.
+     */
+    protected static final int MEMBER_ENTRY_SIZE = 8;
+
+    /**
      * Conversion from nano- to non-scaled.
      */
     private static final double NANO = 1e9;

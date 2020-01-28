@@ -19,12 +19,8 @@ public class ParallelBinaryWriterExample {
         writer.write(way);
     }
 
-    private void processRelations(Relation way) {
-        //relationsCounter.incrementAndGet();
-    }
-
-    private void processChangesets(Long id) {
-        //changesetsCounter.incrementAndGet();
+    private void processRelations(Relation relation) {
+        writer.write(relation);
     }
 
     @SneakyThrows
@@ -52,7 +48,6 @@ public class ParallelBinaryWriterExample {
                 .onNode(this::processNodes)
                 .onWay(this::processWays)
                 .onRelation(this::processRelations)
-                .onChangeset(this::processChangesets)
                 .parse();
         output.close();
     }

@@ -3,6 +3,7 @@ package com.wolt.osm.parallelpbf.io;
 import com.wolt.osm.parallelpbf.blob.BlobWriter;
 import com.wolt.osm.parallelpbf.encoder.DenseNodesEncoder;
 import com.wolt.osm.parallelpbf.encoder.OsmEntityEncoder;
+import com.wolt.osm.parallelpbf.encoder.RelationEncoder;
 import com.wolt.osm.parallelpbf.encoder.WayEncoder;
 import com.wolt.osm.parallelpbf.entity.Node;
 import com.wolt.osm.parallelpbf.entity.OsmEntity;
@@ -46,6 +47,11 @@ public final class OSMWriter implements Runnable {
      * Current(!) ways block encoder.
      */
     private OsmEntityEncoder<Way> wayEncoder;
+
+    /**
+     * Current(!) relation block encoder.
+     */
+    private OsmEntityEncoder<Relation> relationEncoder;
 
     /**
      * Writes contents of dense nodes encoder to the writer
@@ -93,6 +99,13 @@ public final class OSMWriter implements Runnable {
     }
 
     /**
+     * WaysEncoder reset/create function.
+     */
+    private void relationReset() {
+        this.relationEncoder = new RelationEncoder();
+    }
+
+    /**
      * OSMWriter constructor.
      * @param output Shared BlobWriter
      * @param queue input queue with entities.
@@ -101,7 +114,8 @@ public final class OSMWriter implements Runnable {
         this.writer = output;
         this.writeQueue = queue;
         nodesReset();
-        wayEncoder = new WayEncoder();
+        wayReset();
+        relationReset();
     }
 
     @Override
@@ -115,8 +129,7 @@ public final class OSMWriter implements Runnable {
                 } else if (entity instanceof Way) {
                     write((Way) entity, wayEncoder, this::wayReset);
                 } else if (entity instanceof Relation) {
-                    Relation relation = (Relation) entity;
-                    //write(relation);
+                    write((Relation) entity, relationEncoder, this::relationReset);
                 } else {
                     log.error("Unknown entity type: {}", entity);
                 }
@@ -127,6 +140,9 @@ public final class OSMWriter implements Runnable {
                 }
                 if (wayEncoder.estimateSize() > 0) {
                     flush(wayEncoder, this::wayReset);
+                }
+                if (relationEncoder.estimateSize() > 0) {
+                    flush(relationEncoder, this::relationReset);
                 }
                 log.debug("OSMWriter requested to stop");
                 return;

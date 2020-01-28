@@ -12,12 +12,6 @@ import crosby.binary.Osmformat;
  */
 public final class WayEncoder extends OsmEntityEncoder<Way> {
     /**
-     * Single member entry (key or value) is a long value,
-     * so 8 bytes per entry.
-     */
-    private static final int MEMBER_ENTRY_SIZE = 8;
-
-    /**
      * Length of all members arrays, calculated as sum of all members entries of each
      * way.
      */
