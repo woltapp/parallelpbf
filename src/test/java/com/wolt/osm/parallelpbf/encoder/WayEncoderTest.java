@@ -57,7 +57,6 @@ class WayEncoderTest {
 
     @Test
     public void testNoUseAfterWrite() {
-        String str = "test";
         Way way = new Way(1L);
 
         WayEncoder testedObject = new WayEncoder();
