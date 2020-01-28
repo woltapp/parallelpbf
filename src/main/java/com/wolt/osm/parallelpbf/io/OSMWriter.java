@@ -2,6 +2,7 @@ package com.wolt.osm.parallelpbf.io;
 
 import com.wolt.osm.parallelpbf.blob.BlobWriter;
 import com.wolt.osm.parallelpbf.encoder.DenseNodesEncoder;
+import com.wolt.osm.parallelpbf.encoder.WayEncoder;
 import com.wolt.osm.parallelpbf.entity.Node;
 import com.wolt.osm.parallelpbf.entity.OsmEntity;
 import com.wolt.osm.parallelpbf.entity.Relation;
@@ -41,6 +42,11 @@ public final class OSMWriter implements Runnable {
     private DenseNodesEncoder nodesEncoder;
 
     /**
+     * Current(!) ways block encoder.
+     */
+    private WayEncoder wayEncoder;
+
+    /**
      * Writes contents of dense nodes encoder to the writer
      * and resets encoder.
      */
@@ -63,6 +69,28 @@ public final class OSMWriter implements Runnable {
     }
 
     /**
+     * Writes contents of way encoder to the writer
+     * and resets encoder.
+     */
+    private void flushWay() {
+        byte[] blob = wayEncoder.write();
+        writer.writeData(blob);
+        wayEncoder = new WayEncoder();
+    }
+
+    /**
+     * Writes ways to the encoder and flushes to the
+     * writer in case of hitting size limit.
+     * @param way Way to write.
+     */
+    private void write(final Way way) {
+        wayEncoder.add(way);
+        if (wayEncoder.estimateSize() > LIMIT_BLOB_SIZE) {
+            flushWay();
+        }
+    }
+
+    /**
      * OSMWriter constructor.
      * @param output Shared BlobWriter
      * @param queue input queue with entities.
@@ -71,6 +99,7 @@ public final class OSMWriter implements Runnable {
         this.writer = output;
         this.writeQueue = queue;
         nodesEncoder = new DenseNodesEncoder();
+        wayEncoder = new WayEncoder();
     }
 
     @Override
@@ -82,8 +111,7 @@ public final class OSMWriter implements Runnable {
                 if (entity instanceof Node) {
                     write((Node) entity);
                 } else if (entity instanceof Way) {
-                    Way way = (Way) entity;
-                    //write(way);
+                    write((Way) entity);
                 } else if (entity instanceof Relation) {
                     Relation relation = (Relation) entity;
                     //write(relation);
@@ -92,7 +120,12 @@ public final class OSMWriter implements Runnable {
                 }
 
             } catch (InterruptedException e) {
-                flushNodes();
+                if (nodesEncoder.estimateSize() > 0) {
+                    flushNodes();
+                }
+                if (wayEncoder.estimateSize() > 0) {
+                    flushWay();
+                }
                 log.debug("OSMWriter requested to stop");
                 return;
             }

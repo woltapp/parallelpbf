@@ -1,11 +1,7 @@
 package com.wolt.osm.parallelpbf.encoder;
 
-import com.google.protobuf.ByteString;
 import com.wolt.osm.parallelpbf.entity.Node;
 import crosby.binary.Osmformat;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Encodes for DenseNodes structure. Keeps data for the next blob
@@ -14,7 +10,7 @@ import java.util.Map;
  * Encoder is stateful and can't be used after 'write' call is issued.
  * Encoder is not thread-safe.
  */
-public final class DenseNodesEncoder extends OsmEncoder {
+public final class DenseNodesEncoder extends OsmEntityEncoder {
     /**
      * Coordinates grid default granularity.
      */
@@ -25,33 +21,6 @@ public final class DenseNodesEncoder extends OsmEncoder {
      * So single node will use 24 bytes.
      */
     private static final int NODE_ENTRY_SIZE = 24;
-
-    /**
-     * Single tag entry (key or value) is a integer index,
-     * so 4 bytes per entry.
-     */
-    private static final int TAG_ENTRY_SIZE = 4;
-
-    /**
-     * Keeps current maximum string index value.
-     */
-    private Integer stringIndex = 0;
-
-    /**
-     * Size of strings kept in the string table.
-     */
-    private Integer stringTableSize = 0;
-
-    /**
-     * Reverse index mapping - for string already stored in the table it will map
-     * string values back to their indices.
-     */
-    private Map<String, Integer> indexMap = new HashMap<>();
-
-    /**
-     * The string table.
-     */
-    private Osmformat.StringTable.Builder strings = Osmformat.StringTable.newBuilder();
 
     /**
      * Current value of NodeId for delta coding.
@@ -74,31 +43,10 @@ public final class DenseNodesEncoder extends OsmEncoder {
     private Osmformat.DenseNodes.Builder nodes = Osmformat.DenseNodes.newBuilder();
 
     /**
-     * Adds string to the string table and adds string size to the stringtable size.
-     * @param str String to add.
-     * @return String index in table.
-     */
-    private int addStringToTable(final String str) {
-        stringTableSize = stringTableSize + str.length();
-        strings.addS(ByteString.copyFromUtf8(str));
-        return ++stringIndex;
-    }
-
-    /**
-     * Finds stringtable index for a supplied string. Will return either existing index for a string
-     * or add string to the stringtable and emit a new index.
-     * @param s String to index.
-     * @return Strings index in the stringtable.
-     */
-    private int getStringIndex(final String s) {
-        return indexMap.computeIfAbsent(s, this::addStringToTable);
-    }
-
-    /**
      * Default constructor.
      */
     public DenseNodesEncoder() {
-        strings.addS(ByteString.EMPTY); //First entry with index 0 is always empty.
+        super();
     }
 
     /**
@@ -131,22 +79,19 @@ public final class DenseNodesEncoder extends OsmEncoder {
      * As protobuf will compact the values in arrays, actual size expected to be smaller.
      * @return Estimated approximate maximum size of a blob.
      */
+    @Override
     public int estimateSize() {
-        return stringTableSize + nodes.getIdCount() * NODE_ENTRY_SIZE + nodes.getKeysValsCount() * TAG_ENTRY_SIZE;
+        return this.getStringSize() + nodes.getIdCount() * NODE_ENTRY_SIZE + nodes.getKeysValsCount() * TAG_ENTRY_SIZE;
     }
 
-    /**
-     * Build a blob from the collected data. Encoder will become
-     * unusable after that call.
-     * @return OSM PBF primitiveBlock blob.
-     */
+    @Override
     public byte[] write() {
         Osmformat.PrimitiveGroup.Builder nodesGroup = Osmformat.PrimitiveGroup.newBuilder().setDense(nodes);
         return Osmformat.PrimitiveBlock.newBuilder()
                 .setGranularity(GRANULARITY)
                 .setLatOffset(0)
                 .setLonOffset(0)
-                .setStringtable(strings)
+                .setStringtable(this.getStrings())
                 .addPrimitivegroup(nodesGroup)
                 .build()
                 .toByteArray();

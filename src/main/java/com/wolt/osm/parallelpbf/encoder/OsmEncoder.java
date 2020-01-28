@@ -5,6 +5,12 @@ package com.wolt.osm.parallelpbf.encoder;
  */
 public abstract class OsmEncoder {
     /**
+     * Single tag entry (key or value) is a integer index,
+     * so 4 bytes per entry.
+     */
+    protected static final int TAG_ENTRY_SIZE = 4;
+
+    /**
      * Conversion from nano- to non-scaled.
      */
     private static final double NANO = 1e9;

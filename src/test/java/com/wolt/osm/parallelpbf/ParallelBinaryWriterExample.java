@@ -16,7 +16,7 @@ public class ParallelBinaryWriterExample {
     }
 
     private void processWays(Way way) {
-        //waysCounter.incrementAndGet();
+        writer.write(way);
     }
 
     private void processRelations(Relation way) {
