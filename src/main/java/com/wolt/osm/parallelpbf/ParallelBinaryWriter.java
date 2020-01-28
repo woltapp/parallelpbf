@@ -21,6 +21,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 @Slf4j
 public class ParallelBinaryWriter implements Closeable {
     /**
+     * Number of threads to use.
+     */
+    private final int threads;
+    /**
      * Output writer.
      */
     private final BlobWriter writer;
@@ -56,11 +60,18 @@ public class ParallelBinaryWriter implements Closeable {
      */
     public ParallelBinaryWriter(final OutputStream outputStream, final int noThreads, final BoundBox boundBox) {
         this.writer = new BlobWriter(outputStream);
+        this.threads = noThreads;
         writeQueue = new LinkedBlockingQueue<>(noThreads);
         if (!writeHeader(boundBox)) {
             throw new RuntimeException("Error while creating writer and writing header");
         }
-        for (int indx = 0; indx < noThreads; ++indx) {
+    }
+
+    /**
+     * Starts reading threads.
+     */
+    public void start() {
+        for (int indx = 0; indx < this.threads; ++indx) {
             Thread worker = new Thread(new OSMWriter(writer, writeQueue));
             worker.start();
             workers.push(worker);
@@ -85,11 +96,9 @@ public class ParallelBinaryWriter implements Closeable {
 
     /**
      * Finishes OSM PBF file. **Must** be called or file may be left unfinished.
-     *
-     * @throws IOException When something goes wrong.
      */
     @Override
-    public void close() throws IOException {
+    public void close() {
         workers.forEach((worker) -> {
             worker.interrupt();
             try {

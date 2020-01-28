@@ -41,6 +41,7 @@ public class ParallelBinaryWriterExample {
         OutputStream output = new FileOutputStream(outputFile);
 
         writer = new ParallelBinaryWriter(output,1, null);
+        writer.start();
 
         InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream("sample.pbf");
         new ParallelBinaryParser(input, 1)
