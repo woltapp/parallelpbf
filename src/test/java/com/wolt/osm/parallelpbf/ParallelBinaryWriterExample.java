@@ -12,7 +12,7 @@ public class ParallelBinaryWriterExample {
     private ParallelBinaryWriter writer;
 
     private void processNodes(Node node) {
-        //nodesCounter.incrementAndGet();
+        writer.write(node);
     }
 
     private void processWays(Way way) {

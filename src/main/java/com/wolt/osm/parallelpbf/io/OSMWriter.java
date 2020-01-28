@@ -1,6 +1,7 @@
 package com.wolt.osm.parallelpbf.io;
 
 import com.wolt.osm.parallelpbf.blob.BlobWriter;
+import com.wolt.osm.parallelpbf.encoder.DenseNodesEncoder;
 import com.wolt.osm.parallelpbf.entity.Node;
 import com.wolt.osm.parallelpbf.entity.OsmEntity;
 import com.wolt.osm.parallelpbf.entity.Relation;
@@ -28,6 +29,8 @@ public final class OSMWriter implements Runnable {
      */
     private final LinkedBlockingQueue<OsmEntity> writeQueue;
 
+    private DenseNodesEncoder nodesEncoder;
+
     /**
      * OSMWriter constructor.
      * @param output Shared BlobWriter
@@ -36,6 +39,7 @@ public final class OSMWriter implements Runnable {
     public OSMWriter(final BlobWriter output, final LinkedBlockingQueue<OsmEntity> queue) {
         this.writer = output;
         this.writeQueue = queue;
+        nodesEncoder = new DenseNodesEncoder();
     }
 
     @Override
@@ -46,7 +50,12 @@ public final class OSMWriter implements Runnable {
                 OsmEntity entity = writeQueue.take();
                 if (entity instanceof Node) {
                     Node node = (Node) entity;
-                    //write(node);
+                    nodesEncoder.addNode(node);
+                    if (nodesEncoder.estimateSize() > 15 * 1024 * 1024) {
+                        byte[] blob = nodesEncoder.write();
+                        writer.writeData(blob);
+                        nodesEncoder = new DenseNodesEncoder();
+                    }
                 } else if (entity instanceof Way) {
                     Way way = (Way) entity;
                     //write(way);
@@ -58,6 +67,8 @@ public final class OSMWriter implements Runnable {
                 }
 
             } catch (InterruptedException e) {
+                byte[] blob = nodesEncoder.write();
+                writer.writeData(blob);
                 log.debug("OSMWriter requested to stop");
                 return;
             }
