@@ -112,16 +112,16 @@ public final class DenseNodesEncoder extends OsmEncoder {
         });
         nodes.addKeysVals(0); //Index zero means 'end of tags for node'
 
-        id = node.getId() - id;
-        nodes.addId(id);
+        nodes.addId(node.getId() - id);
+        id = node.getId();
 
         long latMillis = doubleToNanoScaled(node.getLat() / GRANULARITY);
         long lonMillis = doubleToNanoScaled(node.getLon() / GRANULARITY);
 
-        lat = latMillis - lat;
-        lon = lonMillis - lon;
-        nodes.addLat(lat);
-        nodes.addLon(lon);
+        nodes.addLat(latMillis - lat);
+        nodes.addLon(lonMillis - lon);
+        lat = latMillis;
+        lon = lonMillis;
     }
 
     /**
