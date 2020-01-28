@@ -7,49 +7,105 @@ import crosby.binary.Osmformat;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DenseNodesEncoder {
-    Integer stringIndex = 0;
-    Integer stringTableSize = 0;
+/**
+ * Encodes for DenseNodes structure. Keeps data for the next blob
+ * production in RAM and form byte[] blob in request.
+ *
+ * Encoder is stateful and can't be used after 'write' call is issued.
+ * Encoder is not thread-safe.
+ */
+public final class DenseNodesEncoder extends OsmEncoder {
+    /**
+     * Coordinates grid default granularity.
+     */
+    private static final int GRANULARITY = 100;
+
+    /**
+     * Single mode uses 3 long values: id, lat, lon.
+     * So single node will use 24 bytes.
+     */
+    private static final int NODE_ENTRY_SIZE = 24;
+
+    /**
+     * Single tag entry (key or value) is a integer index,
+     * so 4 bytes per entry.
+     */
+    private static final int TAG_ENTRY_SIZE = 4;
+
+    /**
+     * Keeps current maximum string index value.
+     */
+    private Integer stringIndex = 0;
+
+    /**
+     * Size of strings kept in the string table.
+     */
+    private Integer stringTableSize = 0;
+
+    /**
+     * Reverse index mapping - for string already stored in the table it will map
+     * string values back to their indices.
+     */
     private Map<String, Integer> indexMap = new HashMap<>();
-    long id = 0;
-    long lat = 0;
-    long lon = 0;
+
+    /**
+     * The string table.
+     */
     private Osmformat.StringTable.Builder strings = Osmformat.StringTable.newBuilder();
+
+    /**
+     * Current value of NodeId for delta coding.
+     */
+    private long id = 0;
+
+    /**
+     * Current value of lat millis for delta coding.
+     */
+    private long lat = 0;
+
+    /**
+     * Current value of lon millis for delta coding.
+     */
+    private long lon = 0;
+
+    /**
+     * DensNodes blob.
+     */
     private Osmformat.DenseNodes.Builder nodes = Osmformat.DenseNodes.newBuilder();
-    private Osmformat.PrimitiveBlock.Builder block = Osmformat.PrimitiveBlock.newBuilder();
 
     /**
-     * Conversion from nano- to non-scaled.
+     * Adds string to the string table and adds string size to the stringtable size.
+     * @param str String to add.
+     * @return String index in table.
      */
-    private static final double NANO = 1e9;
+    private int addStringToTable(final String str) {
+        stringTableSize = stringTableSize + str.length();
+        strings.addS(ByteString.copyFromUtf8(str));
+        return ++stringIndex;
+    }
 
     /**
-     * Convert double to nano-scaled long.
-     * @param value double to convert.
-     * @return value multiplied to 1e9 and rounded then.
+     * Finds stringtable index for a supplied string. Will return either existing index for a string
+     * or add string to the stringtable and emit a new index.
+     * @param s String to index.
+     * @return Strings index in the stringtable.
      */
-    private static long doubleToNanoScaled(final double value) {
-        return Math.round(value * NANO);
+    private int getStringIndex(final String s) {
+        return indexMap.computeIfAbsent(s, this::addStringToTable);
     }
 
-    private int getStringIndex(String s) {
-        return indexMap.computeIfAbsent(s, (str) -> {
-            stringTableSize = stringTableSize + str.length();
-            strings.addS(ByteString.copyFromUtf8(str));
-            return ++stringIndex;
-        });
-    }
-
+    /**
+     * Default constructor.
+     */
     public DenseNodesEncoder() {
         strings.addS(ByteString.EMPTY); //First entry with index 0 is always empty.
-
-        //Dense nodes default values.
-        block.setGranularity(100)
-                .setLatOffset(0)
-                .setLonOffset(0);
     }
 
-    public void addNode(Node node) {
+    /**
+     * Adds a node to the encoder.
+     * @param node Node to add.
+     */
+    public void addNode(final Node node) {
         node.getTags().forEach((k, v) -> {
             nodes.addKeysVals(getStringIndex(k));
             nodes.addKeysVals(getStringIndex(v));
@@ -59,21 +115,40 @@ public class DenseNodesEncoder {
         id = node.getId() - id;
         nodes.addId(id);
 
-        long lat_millis = doubleToNanoScaled(node.getLat()/100);
-        long lon_millis = doubleToNanoScaled(node.getLon()/100);
+        long latMillis = doubleToNanoScaled(node.getLat() / GRANULARITY);
+        long lonMillis = doubleToNanoScaled(node.getLon() / GRANULARITY);
 
-        lat = lat_millis - lat;
-        lon = lon_millis - lon;
+        lat = latMillis - lat;
+        lon = lonMillis - lon;
         nodes.addLat(lat);
         nodes.addLon(lon);
     }
 
+    /**
+     * Provides approximate size of the future blob.
+     * Size is calculated as length of all strings in the string tables
+     * plus 24 bytes per each node plus 4 bytes per each tag, including closing tags.
+     * As protobuf will compact the values in arrays, actual size expected to be smaller.
+     * @return Estimated approximate maximum size of a blob.
+     */
     public int estimateSize() {
-        return stringTableSize + nodes.getIdCount() * 24;
+        return stringTableSize + nodes.getIdCount() * NODE_ENTRY_SIZE + nodes.getKeysValsCount() * TAG_ENTRY_SIZE;
     }
 
+    /**
+     * Build a blob from the collected data. Encoder will become
+     * unusable after that call.
+     * @return OSM PBF primitiveBlock blob.
+     */
     public byte[] write() {
         Osmformat.PrimitiveGroup.Builder nodesGroup = Osmformat.PrimitiveGroup.newBuilder().setDense(nodes);
-        return block.setStringtable(strings).addPrimitivegroup(nodesGroup).build().toByteArray();
+        return Osmformat.PrimitiveBlock.newBuilder()
+                .setGranularity(GRANULARITY)
+                .setLatOffset(0)
+                .setLonOffset(0)
+                .setStringtable(strings)
+                .addPrimitivegroup(nodesGroup)
+                .build()
+                .toByteArray();
     }
 }

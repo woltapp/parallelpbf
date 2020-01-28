@@ -19,6 +19,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 @Slf4j
 public final class OSMWriter implements Runnable {
     /**
+     * Blob should not be bigger then 16M, but we limit to
+     * 15M for a safety, as we do estimate size approximately.
+     */
+    private static final int LIMIT_BLOB_SIZE = 15 * 1024 * 1024;
+
+    /**
      * (Shared) BlobWriter for this OSMWriter.
      * BlobWriter.write() call expected to be thread-safe.
      */
@@ -29,6 +35,9 @@ public final class OSMWriter implements Runnable {
      */
     private final LinkedBlockingQueue<OsmEntity> writeQueue;
 
+    /**
+     * Current(!) densenodes block encoder.
+     */
     private DenseNodesEncoder nodesEncoder;
 
     /**
@@ -51,7 +60,7 @@ public final class OSMWriter implements Runnable {
                 if (entity instanceof Node) {
                     Node node = (Node) entity;
                     nodesEncoder.addNode(node);
-                    if (nodesEncoder.estimateSize() > 15 * 1024 * 1024) {
+                    if (nodesEncoder.estimateSize() > LIMIT_BLOB_SIZE) {
                         byte[] blob = nodesEncoder.write();
                         writer.writeData(blob);
                         nodesEncoder = new DenseNodesEncoder();

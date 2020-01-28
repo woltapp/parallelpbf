@@ -7,26 +7,7 @@ import crosby.binary.Osmformat;
 /**
  * HeaderBlock encoder.
  */
-public final class OsmHeaderEncoder {
-    /**
-     * Conversion from nano- to non-scaled.
-     */
-    private static final double NANO = 1e9;
-
-    /**
-     * Do not construct me.
-     */
-    private OsmHeaderEncoder() { };
-
-    /**
-     * Convert double to nano-scaled long.
-     * @param value double to convert.
-     * @return value multiplied to 1e9 and rounded then.
-     */
-    private static long doubleToNanoScaled(final double value) {
-        return Math.round(value * NANO);
-    }
-
+public final class OsmHeaderEncoder extends OsmEncoder {
     /**
      * Wraps bound box to OSM PBF entity.
      * @param boundBox Bound box to wrap.
