@@ -41,6 +41,28 @@ public final class OSMWriter implements Runnable {
     private DenseNodesEncoder nodesEncoder;
 
     /**
+     * Writes contents of dense nodes encoder to the writer
+     * and resets encoder.
+     */
+    private void flushNodes() {
+        byte[] blob = nodesEncoder.write();
+        writer.writeData(blob);
+        nodesEncoder = new DenseNodesEncoder();
+    }
+
+    /**
+     * Writes node to the encoder and flushes to the
+     * writer in case of hitting size limit.
+     * @param node Node do write.
+     */
+    private void write(final Node node) {
+        nodesEncoder.addNode(node);
+        if (nodesEncoder.estimateSize() > LIMIT_BLOB_SIZE) {
+            flushNodes();
+        }
+    }
+
+    /**
      * OSMWriter constructor.
      * @param output Shared BlobWriter
      * @param queue input queue with entities.
@@ -58,13 +80,7 @@ public final class OSMWriter implements Runnable {
             try {
                 OsmEntity entity = writeQueue.take();
                 if (entity instanceof Node) {
-                    Node node = (Node) entity;
-                    nodesEncoder.addNode(node);
-                    if (nodesEncoder.estimateSize() > LIMIT_BLOB_SIZE) {
-                        byte[] blob = nodesEncoder.write();
-                        writer.writeData(blob);
-                        nodesEncoder = new DenseNodesEncoder();
-                    }
+                    write((Node) entity);
                 } else if (entity instanceof Way) {
                     Way way = (Way) entity;
                     //write(way);
@@ -76,8 +92,7 @@ public final class OSMWriter implements Runnable {
                 }
 
             } catch (InterruptedException e) {
-                byte[] blob = nodesEncoder.write();
-                writer.writeData(blob);
+                flushNodes();
                 log.debug("OSMWriter requested to stop");
                 return;
             }
