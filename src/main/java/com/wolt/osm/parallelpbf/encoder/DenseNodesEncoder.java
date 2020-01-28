@@ -43,11 +43,6 @@ public final class DenseNodesEncoder extends OsmEntityEncoder<Node> {
     private Osmformat.DenseNodes.Builder nodes = Osmformat.DenseNodes.newBuilder();
 
     /**
-     * 'Write was called' flag.
-     */
-    private boolean built = false;
-
-    /**
      * Default constructor.
      */
     public DenseNodesEncoder() {
@@ -60,10 +55,7 @@ public final class DenseNodesEncoder extends OsmEntityEncoder<Node> {
      * @throws IllegalStateException when call after write() call.
      */
     @Override
-    public void add(final Node node) {
-        if (built) {
-            throw new IllegalStateException("Encoder content is already written");
-        }
+    protected void addImpl(final Node node) {
         node.getTags().forEach((k, v) -> {
             nodes.addKeysVals(getStringIndex(k));
             nodes.addKeysVals(getStringIndex(v));
@@ -95,8 +87,7 @@ public final class DenseNodesEncoder extends OsmEntityEncoder<Node> {
     }
 
     @Override
-    public byte[] write() {
-        built = true;
+    protected byte[] writeImpl() {
         Osmformat.PrimitiveGroup.Builder nodesGroup = Osmformat.PrimitiveGroup.newBuilder().setDense(nodes);
         return Osmformat.PrimitiveBlock.newBuilder()
                 .setGranularity(GRANULARITY)

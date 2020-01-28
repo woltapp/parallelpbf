@@ -34,6 +34,11 @@ public abstract class OsmEntityEncoder<T extends OsmEntity> extends OsmEncoder {
     private Osmformat.StringTable.Builder strings = Osmformat.StringTable.newBuilder();
 
     /**
+     * 'Write was called' flag.
+     */
+    private boolean built = false;
+
+    /**
      * Adds string to the string table and adds string size to the stringtable size.
      * @param str String to add.
      * @return String index in table.
@@ -70,6 +75,9 @@ public abstract class OsmEntityEncoder<T extends OsmEntity> extends OsmEncoder {
         return strings;
     }
 
+    protected abstract void addImpl(T entity);
+    protected abstract byte[] writeImpl();
+
     /**
      * Default constructor.
      */
@@ -82,7 +90,12 @@ public abstract class OsmEntityEncoder<T extends OsmEntity> extends OsmEncoder {
      * @param entity Entity to add.
      * @throws IllegalStateException when call after write() call.
      */
-    public abstract void add(T entity);
+    public void add(T entity) {
+        if (built) {
+            throw new IllegalStateException("Encoder content is already written");
+        }
+        addImpl(entity);
+    }
 
     /**
      * Provides approximate size of the future blob.
@@ -95,5 +108,8 @@ public abstract class OsmEntityEncoder<T extends OsmEntity> extends OsmEncoder {
      * unusable after that call.
      * @return OSM PBF primitiveBlock blob.
      */
-    public abstract byte[] write();
+    public byte[] write() {
+        built = true;
+        return writeImpl();
+    }
 }

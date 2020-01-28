@@ -29,11 +29,6 @@ public final class WayEncoder extends OsmEntityEncoder<Way> {
     private Osmformat.PrimitiveGroup.Builder ways = Osmformat.PrimitiveGroup.newBuilder();
 
     /**
-     * 'Write was called' flag.
-     */
-    private boolean built = false;
-
-    /**
      * Default constructor.
      */
     public WayEncoder() {
@@ -46,10 +41,7 @@ public final class WayEncoder extends OsmEntityEncoder<Way> {
      * @throws IllegalStateException when call after write() call.
      */
     @Override
-    public void add(final Way w) {
-        if (built) {
-            throw new IllegalStateException("Encoder content is already written");
-        }
+    protected void addImpl(final Way w) {
         Osmformat.Way.Builder way = Osmformat.Way.newBuilder();
 
         way.setId(w.getId());
@@ -83,8 +75,7 @@ public final class WayEncoder extends OsmEntityEncoder<Way> {
     }
 
     @Override
-    public byte[] write() {
-        built = true;
+    protected byte[] writeImpl() {
         return Osmformat.PrimitiveBlock.newBuilder()
                 .setStringtable(this.getStrings())
                 .addPrimitivegroup(ways)

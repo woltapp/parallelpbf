@@ -35,16 +35,8 @@ public final class RelationEncoder extends OsmEntityEncoder<Relation> {
      */
     private Osmformat.PrimitiveGroup.Builder relations = Osmformat.PrimitiveGroup.newBuilder();
 
-    /**
-     * 'Write was called' flag.
-     */
-    private boolean built = false;
-
     @Override
-    public void add(final Relation r) {
-        if (built) {
-            throw new IllegalStateException("Encoder content is already written");
-        }
+    protected void addImpl(final Relation r) {
         Osmformat.Relation.Builder relation = Osmformat.Relation.newBuilder();
 
         relation.setId(r.getId());
@@ -73,8 +65,7 @@ public final class RelationEncoder extends OsmEntityEncoder<Relation> {
     }
 
     @Override
-    public byte[] write() {
-        built = true;
+    protected byte[] writeImpl() {
         return Osmformat.PrimitiveBlock.newBuilder()
                 .setStringtable(this.getStrings())
                 .addPrimitivegroup(relations)

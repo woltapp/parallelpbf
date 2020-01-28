@@ -11,7 +11,7 @@ class OsmEntityEncoderTest {
     private class OsmEntityEncoderImpl extends OsmEntityEncoder<Node> {
 
         @Override
-        public void add(Node entity) {
+        public void addImpl(Node entity) {
 
         }
 
@@ -21,7 +21,7 @@ class OsmEntityEncoderTest {
         }
 
         @Override
-        public byte[] write() {
+        public byte[] writeImpl() {
             return new byte[0];
         }
     }
