@@ -23,7 +23,7 @@ class DenseNodesEncoderTest {
         DenseNodesEncoder testedObject = new DenseNodesEncoder(stringEncoder);
         testedObject.add(node);
 
-        assertEquals(40, testedObject.estimateSize());
+        assertEquals(36, testedObject.estimateSize());
     }
 
     @Test

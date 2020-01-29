@@ -40,7 +40,11 @@ public final class RelationEncoder extends OsmEntityEncoder<Relation> {
      */
     private final StringTableEncoder stringEncoder;
 
-    public RelationEncoder(StringTableEncoder stringTableEncoder) {
+    /**
+     * Constructor.
+     * @param stringTableEncoder Block-wide string encoder.
+     */
+    public RelationEncoder(final StringTableEncoder stringTableEncoder) {
         this.stringEncoder = stringTableEncoder;
     }
 
@@ -70,7 +74,7 @@ public final class RelationEncoder extends OsmEntityEncoder<Relation> {
 
     @Override
     public int estimateSize() {
-        return relations.getRelationsCount() * MEMBER_ENTRY_SIZE + stringEncoder.getStringSize() + membersLength + tagsLength;
+        return relations.getRelationsCount() * MEMBER_ENTRY_SIZE + membersLength + tagsLength;
     }
 
     @Override

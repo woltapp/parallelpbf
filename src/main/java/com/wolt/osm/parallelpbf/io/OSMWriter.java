@@ -65,23 +65,25 @@ public final class OSMWriter implements Runnable {
      * @param waysSize Estimated size of ways group.
      * @param relationSize Estimated size of relations group.
      */
-    private void flush(int nodesSize, int waysSize, int relationSize) {
-        Osmformat.PrimitiveBlock.Builder block = Osmformat.PrimitiveBlock.newBuilder()
-                .setStringtable(stringEncoder.getStrings());
-        if (nodesSize > 0) {
-            block.setGranularity(OsmEncoder.GRANULARITY)
-                    .setLatOffset(0)
-                    .setLonOffset(0)
-                    .addPrimitivegroup(nodesEncoder.write());
+    private void flush(final int nodesSize, final int waysSize, final int relationSize) {
+        if (nodesSize + waysSize + relationSize > 0) {
+            Osmformat.PrimitiveBlock.Builder block = Osmformat.PrimitiveBlock.newBuilder()
+                    .setStringtable(stringEncoder.getStrings());
+            if (nodesSize > 0) {
+                block.setGranularity(OsmEncoder.GRANULARITY)
+                        .setLatOffset(0)
+                        .setLonOffset(0)
+                        .addPrimitivegroup(nodesEncoder.write());
+            }
+            if (waysSize > 0) {
+                block.addPrimitivegroup(wayEncoder.write());
+            }
+            if (relationSize > 0) {
+                block.addPrimitivegroup(relationEncoder.write());
+            }
+            byte[] blob = block.build().toByteArray();
+            writer.writeData(blob);
         }
-        if (waysSize > 0) {
-            block.addPrimitivegroup(wayEncoder.write());
-        }
-        if (relationSize > 0) {
-            block.addPrimitivegroup(relationEncoder.write());
-        }
-        byte[] blob = block.build().toByteArray();
-        writer.writeData(blob);
 
         encodersReset();
     }

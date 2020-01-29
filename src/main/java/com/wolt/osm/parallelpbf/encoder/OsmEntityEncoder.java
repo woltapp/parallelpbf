@@ -13,7 +13,16 @@ public abstract class OsmEntityEncoder<T extends OsmEntity> extends OsmEncoder {
      */
     private boolean built = false;
 
+    /**
+     * Type specific write implementation.
+     * @param entity Osm entity to add to the encoder.
+     */
     protected abstract void addImpl(T entity);
+
+    /**
+     * Type specific group writer implementation.
+     * @return Group with entities of T type.
+     */
     protected abstract Osmformat.PrimitiveGroup.Builder writeImpl();
 
     /**
@@ -21,7 +30,7 @@ public abstract class OsmEntityEncoder<T extends OsmEntity> extends OsmEncoder {
      * @param entity Entity to add.
      * @throws IllegalStateException when call after write() call.
      */
-    public void add(T entity) {
+    public void add(final T entity) {
         if (built) {
             throw new IllegalStateException("Encoder content is already written");
         }

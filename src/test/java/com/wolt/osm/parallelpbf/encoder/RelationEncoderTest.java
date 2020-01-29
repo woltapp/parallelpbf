@@ -26,7 +26,7 @@ class RelationEncoderTest {
         RelationEncoder testedObject = new RelationEncoder(stringEncoder);
         testedObject.add(relation);
 
-        assertEquals(33, testedObject.estimateSize());
+        assertEquals(29, testedObject.estimateSize());
     }
 
     @Test

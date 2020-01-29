@@ -8,7 +8,6 @@ import com.wolt.osm.parallelpbf.io.OSMWriter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;

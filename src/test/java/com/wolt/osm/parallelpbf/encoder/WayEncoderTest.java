@@ -26,7 +26,7 @@ class WayEncoderTest {
         WayEncoder testedObject = new WayEncoder(stringEncoder);
         testedObject.add(way);
 
-        assertEquals(44, testedObject.estimateSize());
+        assertEquals(40, testedObject.estimateSize());
     }
 
     @Test

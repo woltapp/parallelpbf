@@ -35,8 +35,9 @@ public final class WayEncoder extends OsmEntityEncoder<Way> {
 
     /**
      * Default constructor.
+     * @param stringTableEncoder Block-wide string encoder.
      */
-    public WayEncoder(StringTableEncoder stringTableEncoder) {
+    public WayEncoder(final StringTableEncoder stringTableEncoder) {
         super();
         this.stringEncoder = stringTableEncoder;
     }
@@ -70,14 +71,13 @@ public final class WayEncoder extends OsmEntityEncoder<Way> {
 
     /**
      * Provides approximate size of the future blob.
-     * Size is calculated as length of all strings in the string tables
-     * plus 8 bytes per each way plus 8 bytes per each tag plus 4 bytes each member..
+     * Size is calculated as 8 bytes per each way plus 8 bytes per each tag plus 4 bytes each member..
      * As protobuf will compact the values in arrays, actual size expected to be smaller.
      * @return Estimated approximate maximum size of a blob.
      */
     @Override
     public int estimateSize() {
-        return stringEncoder.getStringSize() + membersLength + tagsLength + ways.getWaysCount() * MEMBER_ENTRY_SIZE;
+        return membersLength + tagsLength + ways.getWaysCount() * MEMBER_ENTRY_SIZE;
     }
 
     @Override

@@ -44,9 +44,9 @@ public final class DenseNodesEncoder extends OsmEntityEncoder<Node> {
 
     /**
      * Default constructor.
+     * @param stringTableEncoder Block-wide sting encoder.
      */
-    public DenseNodesEncoder(final StringTableEncoder stringTableEncoder)
-    {
+    public DenseNodesEncoder(final StringTableEncoder stringTableEncoder) {
         super();
         this.stringEncoder = stringTableEncoder;
     }
@@ -78,14 +78,13 @@ public final class DenseNodesEncoder extends OsmEntityEncoder<Node> {
 
     /**
      * Provides approximate size of the future blob.
-     * Size is calculated as length of all strings in the string tables
-     * plus 24 bytes per each node plus 4 bytes per each tag, including closing tags.
+     * Size is calculated as 24 bytes per each node plus 4 bytes per each tag, including closing tags.
      * As protobuf will compact the values in arrays, actual size expected to be smaller.
      * @return Estimated approximate maximum size of a blob.
      */
     @Override
     public int estimateSize() {
-        return stringEncoder.getStringSize() + nodes.getIdCount() * NODE_ENTRY_SIZE + nodes.getKeysValsCount() * TAG_ENTRY_SIZE;
+        return nodes.getIdCount() * NODE_ENTRY_SIZE + nodes.getKeysValsCount() * TAG_ENTRY_SIZE;
     }
 
     @Override
