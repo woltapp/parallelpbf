@@ -1,6 +1,7 @@
 package com.wolt.osm.parallelpbf.encoder;
 
 import com.wolt.osm.parallelpbf.entity.OsmEntity;
+import crosby.binary.Osmformat;
 
 /**
  * Entity specific extension of OsmEncoder.
@@ -13,7 +14,7 @@ public abstract class OsmEntityEncoder<T extends OsmEntity> extends OsmEncoder {
     private boolean built = false;
 
     protected abstract void addImpl(T entity);
-    protected abstract byte[] writeImpl();
+    protected abstract Osmformat.PrimitiveGroup.Builder writeImpl();
 
     /**
      * Add entity to the encoder.
@@ -38,7 +39,7 @@ public abstract class OsmEntityEncoder<T extends OsmEntity> extends OsmEncoder {
      * unusable after that call.
      * @return OSM PBF primitiveBlock blob.
      */
-    public byte[] write() {
+    public Osmformat.PrimitiveGroup.Builder write() {
         built = true;
         return writeImpl();
     }

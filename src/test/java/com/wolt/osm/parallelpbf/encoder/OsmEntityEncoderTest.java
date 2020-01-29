@@ -1,6 +1,7 @@
 package com.wolt.osm.parallelpbf.encoder;
 
 import com.wolt.osm.parallelpbf.entity.Node;
+import crosby.binary.Osmformat;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -19,8 +20,8 @@ class OsmEntityEncoderTest {
         }
 
         @Override
-        public byte[] writeImpl() {
-            return new byte[0];
+        public Osmformat.PrimitiveGroup.Builder writeImpl() {
+            return Osmformat.PrimitiveGroup.newBuilder();
         }
     }
 

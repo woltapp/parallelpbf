@@ -1,13 +1,11 @@
 package com.wolt.osm.parallelpbf.encoder;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.wolt.osm.parallelpbf.entity.Node;
 import crosby.binary.Osmformat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class DenseNodesEncoderTest {
     private StringTableEncoder stringEncoder;
@@ -29,26 +27,16 @@ class DenseNodesEncoderTest {
     }
 
     @Test
-    public void testWrite() throws InvalidProtocolBufferException {
+    public void testWrite() {
         String str = "test";
         Node node = new Node(1, 10.0, 50.0);
         node.getTags().put(str, str);
 
         DenseNodesEncoder testedObject = new DenseNodesEncoder(stringEncoder);
         testedObject.add(node);
-        byte[] blob = testedObject.write();
+        Osmformat.PrimitiveGroup actual = testedObject.write().build();
 
-        Osmformat.PrimitiveBlock actual = Osmformat.PrimitiveBlock.parseFrom(blob);
-
-        assertEquals(100, actual.getGranularity());
-        assertEquals(0, actual.getLatOffset());
-        assertEquals(0, actual.getLonOffset());
-
-        Osmformat.StringTable stringTable  = actual.getStringtable();
-        assertEquals(ByteString.EMPTY, stringTable.getS(0));
-        assertEquals(str, stringTable.getS(1).toStringUtf8());
-
-        Osmformat.DenseNodes nodes = actual.getPrimitivegroup(0).getDense();
+        Osmformat.DenseNodes nodes = actual.getDense();
         assertEquals(1, nodes.getId(0));
         assertEquals(5.0E8, nodes.getLon(0));
         assertEquals(1.0E8, nodes.getLat(0));
@@ -59,7 +47,7 @@ class DenseNodesEncoderTest {
     }
 
     @Test
-    public void testDeltaCoding() throws InvalidProtocolBufferException {
+    public void testDeltaCoding() {
         String str = "test";
         Node node1 = new Node(3, 20.0, 60.0);
         node1.getTags().put(str, str);
@@ -73,20 +61,20 @@ class DenseNodesEncoderTest {
         testedObject.add(node2);
         testedObject.add(node3);
 
-        byte[] blob = testedObject.write();
+        Osmformat.PrimitiveGroup actual = testedObject.write().build();
 
-        Osmformat.DenseNodes actual = Osmformat.PrimitiveBlock.parseFrom(blob).getPrimitivegroup(0).getDense();
+        Osmformat.DenseNodes nodes = actual.getDense();
 
-        assertEquals(3, actual.getId(0));
-        assertEquals(3, actual.getId(1));
-        assertEquals(-4, actual.getId(2));
+        assertEquals(3, nodes.getId(0));
+        assertEquals(3, nodes.getId(1));
+        assertEquals(-4, nodes.getId(2));
 
-        assertEquals(200000000, actual.getLat(0));
-        assertEquals(100000000, actual.getLat(1));
-        assertEquals(300000000, actual.getLat(2));
+        assertEquals(200000000, nodes.getLat(0));
+        assertEquals(100000000, nodes.getLat(1));
+        assertEquals(300000000, nodes.getLat(2));
 
-        assertEquals(600000000, actual.getLon(0));
-        assertEquals(-400000000, actual.getLon(1));
-        assertEquals(100000000, actual.getLon(2));
+        assertEquals(600000000, nodes.getLon(0));
+        assertEquals(-400000000, nodes.getLon(1));
+        assertEquals(100000000, nodes.getLon(2));
     }
 }

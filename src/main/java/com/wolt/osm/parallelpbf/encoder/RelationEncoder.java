@@ -74,11 +74,7 @@ public final class RelationEncoder extends OsmEntityEncoder<Relation> {
     }
 
     @Override
-    protected byte[] writeImpl() {
-        return Osmformat.PrimitiveBlock.newBuilder()
-                .setStringtable(stringEncoder.getStrings())
-                .addPrimitivegroup(relations)
-                .build()
-                .toByteArray();
+    protected Osmformat.PrimitiveGroup.Builder writeImpl() {
+        return relations;
     }
 }

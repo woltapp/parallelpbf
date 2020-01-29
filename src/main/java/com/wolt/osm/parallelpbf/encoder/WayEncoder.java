@@ -81,11 +81,7 @@ public final class WayEncoder extends OsmEntityEncoder<Way> {
     }
 
     @Override
-    protected byte[] writeImpl() {
-        return Osmformat.PrimitiveBlock.newBuilder()
-                .setStringtable(stringEncoder.getStrings())
-                .addPrimitivegroup(ways)
-                .build()
-                .toByteArray();
+    protected Osmformat.PrimitiveGroup.Builder writeImpl() {
+        return ways;
     }
 }

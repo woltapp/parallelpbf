@@ -5,6 +5,11 @@ package com.wolt.osm.parallelpbf.encoder;
  */
 public abstract class OsmEncoder {
     /**
+     * Coordinates grid default granularity.
+     */
+    public static final int GRANULARITY = 100;
+
+    /**
      * Single tag entry (key or value) is a integer index,
      * so 4 bytes per entry.
      */

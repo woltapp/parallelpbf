@@ -6,6 +6,7 @@ import com.wolt.osm.parallelpbf.entity.Node;
 import com.wolt.osm.parallelpbf.entity.OsmEntity;
 import com.wolt.osm.parallelpbf.entity.Relation;
 import com.wolt.osm.parallelpbf.entity.Way;
+import crosby.binary.Osmformat;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.LinkedBlockingQueue;
@@ -57,73 +58,54 @@ public final class OSMWriter implements Runnable {
 
 
     /**
-     * Writes contents of dense nodes encoder to the writer
-     * and resets encoder.
-     * @param <T> Type of encoder to flush.
-     * @param encoder OsmEntityEncoder to flush.
-     * @param encoderReset callback to the encoder reset procedure.
+     * Writes contents of encoders to the writer
+     * and resets encoders.
+     *
+     * @param nodesSize Estimated size of nodes group.
+     * @param waysSize Estimated size of ways group.
+     * @param relationSize Estimated size of relations group.
      */
-    private <T extends OsmEntity> void flush(final OsmEntityEncoder<T> encoder, final Runnable encoderReset) {
-        byte[] blob = encoder.write();
-        writer.writeData(blob);
-        encoderReset.run();
-    }
-
-    /**
-     * Writes entity to the encoder and flushes to the
-     * writer in case of hitting size limit.
-     * @param <T> Type of entity to write.
-     * @param entity entity do write.
-     * @param encoder encoder to use.
-     * @param encoderReset callback to the encoder reset procedure.
-     */
-    private <T extends OsmEntity> void write(
-            final T entity,
-            final OsmEntityEncoder<T> encoder,
-            final Runnable encoderReset) {
-        encoder.add(entity);
-        if (encoder.estimateSize() > LIMIT_BLOB_SIZE) {
-            flush(encoder, encoderReset);
+    private void flush(int nodesSize, int waysSize, int relationSize) {
+        Osmformat.PrimitiveBlock.Builder block = Osmformat.PrimitiveBlock.newBuilder()
+                .setStringtable(stringEncoder.getStrings());
+        if (nodesSize > 0) {
+            block.setGranularity(OsmEncoder.GRANULARITY)
+                    .setLatOffset(0)
+                    .setLonOffset(0)
+                    .addPrimitivegroup(nodesEncoder.write());
         }
+        if (waysSize > 0) {
+            block.addPrimitivegroup(wayEncoder.write());
+        }
+        if (relationSize > 0) {
+            block.addPrimitivegroup(relationEncoder.write());
+        }
+        byte[] blob = block.build().toByteArray();
+        writer.writeData(blob);
+
+        encodersReset();
     }
 
     /**
-     * NodesEncoder reset/create function.
+     * Encoder reset function. Recreates all the encoders in proper order.
      */
-    private void nodesReset() {
-        this.nodesEncoder = new DenseNodesEncoder(stringEncoder);
-    }
-
-    /**
-     * WaysEncoder reset/create function.
-     */
-    private void wayReset() {
-        this.wayEncoder = new WayEncoder(stringEncoder);
-    }
-
-    /**
-     * WaysEncoder reset/create function.
-     */
-    private void relationReset() {
-        this.relationEncoder = new RelationEncoder(stringEncoder);
-    }
-
-    private void stringReset() {
+    private void encodersReset() {
         this.stringEncoder = new StringTableEncoder();
+        this.nodesEncoder = new DenseNodesEncoder(this.stringEncoder);
+        this.wayEncoder = new WayEncoder(this.stringEncoder);
+        this.relationEncoder = new RelationEncoder(this.stringEncoder);
     }
 
     /**
      * OSMWriter constructor.
+     *
      * @param output Shared BlobWriter
-     * @param queue input queue with entities.
+     * @param queue  input queue with entities.
      */
     public OSMWriter(final BlobWriter output, final LinkedBlockingQueue<OsmEntity> queue) {
         this.writer = output;
         this.writeQueue = queue;
-        stringReset();
-        nodesReset();
-        wayReset();
-        relationReset();
+        encodersReset();
     }
 
     @Override
@@ -133,25 +115,24 @@ public final class OSMWriter implements Runnable {
             try {
                 OsmEntity entity = writeQueue.take();
                 if (entity instanceof Node) {
-                    write((Node) entity, nodesEncoder, this::nodesReset);
+                    nodesEncoder.add((Node) entity);
                 } else if (entity instanceof Way) {
-                    write((Way) entity, wayEncoder, this::wayReset);
+                    wayEncoder.add((Way) entity);
                 } else if (entity instanceof Relation) {
-                    write((Relation) entity, relationEncoder, this::relationReset);
+                    relationEncoder.add((Relation) entity);
                 } else {
                     log.error("Unknown entity type: {}", entity);
                 }
 
+                int nodesSize = nodesEncoder.estimateSize();
+                int waysSize = wayEncoder.estimateSize();
+                int relationSize = relationEncoder.estimateSize();
+                int blobSize = nodesSize + waysSize + relationSize + stringEncoder.getStringSize();
+                if (blobSize > LIMIT_BLOB_SIZE) {
+                    flush(nodesSize, waysSize, relationSize);
+                }
             } catch (InterruptedException e) {
-                if (nodesEncoder.estimateSize() > 0) {
-                    flush(nodesEncoder, this::nodesReset);
-                }
-                if (wayEncoder.estimateSize() > 0) {
-                    flush(wayEncoder, this::wayReset);
-                }
-                if (relationEncoder.estimateSize() > 0) {
-                    flush(relationEncoder, this::relationReset);
-                }
+                flush(nodesEncoder.estimateSize(), wayEncoder.estimateSize(), relationEncoder.estimateSize());
                 log.debug("OSMWriter requested to stop");
                 return;
             }

@@ -1,7 +1,5 @@
 package com.wolt.osm.parallelpbf.encoder;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.wolt.osm.parallelpbf.entity.Way;
 import crosby.binary.Osmformat;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +30,7 @@ class WayEncoderTest {
     }
 
     @Test
-    public void testWrite() throws InvalidProtocolBufferException {
+    public void testWrite() {
         String str = "test";
         Way way = new Way(1L);
         way.getTags().put(str, str);
@@ -43,15 +41,9 @@ class WayEncoderTest {
         WayEncoder testedObject = new WayEncoder(stringEncoder);
         testedObject.add(way);
 
-        byte[] blob = testedObject.write();
+        Osmformat.PrimitiveGroup actual = testedObject.write().build();
 
-        Osmformat.PrimitiveBlock actual = Osmformat.PrimitiveBlock.parseFrom(blob);
-
-        Osmformat.StringTable stringTable  = actual.getStringtable();
-        assertEquals(ByteString.EMPTY, stringTable.getS(0));
-        assertEquals(str, stringTable.getS(1).toStringUtf8());
-
-        Osmformat.Way w = actual.getPrimitivegroup(0).getWays(0);
+        Osmformat.Way w = actual.getWays(0);
         assertEquals(1, w.getId());
         assertEquals(1, w.getKeys(0));
         assertEquals(1, w.getVals(0));

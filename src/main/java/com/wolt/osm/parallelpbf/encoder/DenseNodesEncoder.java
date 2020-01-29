@@ -12,11 +12,6 @@ import crosby.binary.Osmformat;
  */
 public final class DenseNodesEncoder extends OsmEntityEncoder<Node> {
     /**
-     * Coordinates grid default granularity.
-     */
-    private static final int GRANULARITY = 100;
-
-    /**
      * Single mode uses 3 long values: id, lat, lon.
      * So single node will use 24 bytes.
      */
@@ -94,15 +89,7 @@ public final class DenseNodesEncoder extends OsmEntityEncoder<Node> {
     }
 
     @Override
-    protected byte[] writeImpl() {
-        Osmformat.PrimitiveGroup.Builder nodesGroup = Osmformat.PrimitiveGroup.newBuilder().setDense(nodes);
-        return Osmformat.PrimitiveBlock.newBuilder()
-                .setGranularity(GRANULARITY)
-                .setLatOffset(0)
-                .setLonOffset(0)
-                .setStringtable(stringEncoder.getStrings())
-                .addPrimitivegroup(nodesGroup)
-                .build()
-                .toByteArray();
+    protected Osmformat.PrimitiveGroup.Builder writeImpl() {
+        return Osmformat.PrimitiveGroup.newBuilder().setDense(nodes);
     }
 }

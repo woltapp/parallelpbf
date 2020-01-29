@@ -1,7 +1,5 @@
 package com.wolt.osm.parallelpbf.encoder;
 
-import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import com.wolt.osm.parallelpbf.entity.Relation;
 import com.wolt.osm.parallelpbf.entity.RelationMember;
 import crosby.binary.Osmformat;
@@ -32,7 +30,7 @@ class RelationEncoderTest {
     }
 
     @Test
-    public void testWrite() throws InvalidProtocolBufferException {
+    public void testWrite() {
         String str = "test";
         RelationMember member1 = new RelationMember(2L, "test", RelationMember.Type.WAY);
         RelationMember member2 = new RelationMember(3L, "forward", RelationMember.Type.RELATION);
@@ -46,15 +44,9 @@ class RelationEncoderTest {
         RelationEncoder testedObject = new RelationEncoder(stringEncoder);
         testedObject.add(relation);
 
-        byte[] blob = testedObject.write();
+        Osmformat.PrimitiveGroup actual = testedObject.write().build();
 
-        Osmformat.PrimitiveBlock actual = Osmformat.PrimitiveBlock.parseFrom(blob);
-
-        Osmformat.StringTable stringTable  = actual.getStringtable();
-        assertEquals(ByteString.EMPTY, stringTable.getS(0));
-        assertEquals(str, stringTable.getS(1).toStringUtf8());
-
-        Osmformat.Relation r = actual.getPrimitivegroup(0).getRelations(0);
+        Osmformat.Relation r = actual.getRelations(0);
         assertEquals(1, r.getId());
         assertEquals(1, r.getKeys(0));
         assertEquals(1, r.getVals(0));
