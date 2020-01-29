@@ -9,14 +9,14 @@ import com.wolt.osm.parallelpbf.entity.*;
 import crosby.binary.Osmformat;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 class OSMWriterTest {
 
@@ -121,5 +121,26 @@ class OSMWriterTest {
         writeEntity(entity);
 
         assertEquals(0, output.toByteArray().length);
+    }
+
+    @Test
+    @Tag("slow")
+    void testFlushOnOverflow() throws InterruptedException {
+        Thread testedObject = new Thread(new OSMWriter(writer, queue));
+        testedObject.start();
+
+        // We flush on 15*1024*1024, each node is 36 bytes + string table is 4 bytes
+        //That means we have to write more then (15*1024*1024-4)/36 = 436907 nodes.
+        for (int i=0; i<436908; ++i) {
+            queue.put(TestObjectsFactory.node());
+        }
+        while(!queue.isEmpty()) {
+            Thread.sleep(1);
+        }
+        assertTrue(output.toByteArray().length > 4); //4 as is should contain more then just a test tag
+
+        //Flush only there
+        testedObject.interrupt();
+        testedObject.join();
     }
 }
