@@ -24,7 +24,7 @@ public class ParallelBinaryWriterExample {
     }
 
     @SneakyThrows
-    private void printOnCompletions() {
+    private void closeOnComplete() {
         writer.close();
     }
 
@@ -45,7 +45,7 @@ public class ParallelBinaryWriterExample {
 
         InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream("sample.pbf");
         new ParallelBinaryParser(input, 1)
-                .onComplete(this::printOnCompletions)
+                .onComplete(this::closeOnComplete)
                 .onNode(this::processNodes)
                 .onWay(this::processWays)
                 .onRelation(this::processRelations)
