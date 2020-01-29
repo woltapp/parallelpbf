@@ -1,7 +1,7 @@
 # Parallel OSM PBF parser
 
-[OSM PBF format](https://wiki.openstreetmap.org/wiki/PBF_Format) multithreaded reader written in Java. Supports all 
-current OSM PBF features and options
+[OSM PBF format](https://wiki.openstreetmap.org/wiki/PBF_Format) multithreaded reader/writer written in Java. Supports all 
+current OSM PBF features and options (only for reading)
 
 ## Rationale
 
@@ -20,22 +20,22 @@ is to distribute the work on all the cores. And here we go...
         <dependency>
             <groupId>com.wolt.osm</groupId>
             <artifactId>parallelpbf</artifactId>
-            <version>0.2.0</version>
+            <version>0.3.0</version>
         </dependency>
         
 ### Gradle
 
-        compile group: 'com.wolt.osm', name: 'parallelpbf', version: '0.2.0'
+        compile group: 'com.wolt.osm', name: 'parallelpbf', version: '0.3.0'
         
 ### SBT 
                         
-        libraryDependencies += "com.wolt.osm" % "parallelpbf" % "0.2.0"
+        libraryDependencies += "com.wolt.osm" % "parallelpbf" % "0.3.0"
         
 ### Github release
 
-        https://github.com/woltapp/parallelpbf/releases/tag/v0.2.0
+        https://github.com/woltapp/parallelpbf/releases/tag/v0.3.0
         
-## Usage                
+## Reading                
         
 As parsing is asynchronous, it heavily relies on the callbacks. There are 7 callbacks defined:
 
@@ -113,7 +113,7 @@ each run. In case order is important for you, you can either sort after parse or
 parsers. 
 
 
-## Performance comparision
+### Performance comparision
 
 | Region         | Size in GB | Single thread read time in seconds | 24 threads read time in seconds |
 |----------------|------------|------------------------------------|---------------------------------|
@@ -121,6 +121,35 @@ parsers.
 | Asia           |  7.3       |  2381                              | 405                             |
 | Europe         |  21        |  3545                              | 953                             |
 | Planet         |  47        |  8204                              | 3203                            |
+
+## Writing
+
+Write API differs from the Reading API, as it makes no sense to use callbacks here. The writer object provides three
+methods to start writing, feed the writer with data and close writer. Writing function itself is thread-safe and reenterable,
+so can be used from parallel threads.
+
+So the correct workflow will be:
+
+        writer = new ParallelBinaryWriter(output,1, bbox);
+        writer.start();
+        writer.write(node);
+        writer.close();
+
+`ParallelBinaryWriter` accepts two mandatory arguments and one optional:
+
+* `OutputStream output` - OutputStream that will hold OSM PBF data.
+* `int threads` - Number of threads for parallel processing. Writer will automatically throttle and block on `.write()` call if all threads are busy. Each thread keeps blob data in memory, so memory usage will be at least 16MB per thread, but may be more, depending on block content.
+* `BoundBox boundBox` - Optional BoundBox of the data to be written, can be `null`
+
+OSM PBF header will be written to the OutputStream during construction.
+
+`.start()` call actually spawns writing threads and allows to make `.write()` calls. The `.start()` call is not thread-safe.
+
+`.write(OsmEntity)` call sends specified entity to one of the writing threads. This call is thread safe and calling it in parallel
+is recommended. In case of writing threads overload, the `.write()` call will block and wait for an empty writing thread to handle request.
+
+`.close()` will flush block to the output stream and terminate writing threads. Writer should not be used after calling `.close()`
+on it. 
 
 ## Versioning
 
