@@ -29,10 +29,16 @@ public final class WayEncoder extends OsmEntityEncoder<Way> {
     private Osmformat.PrimitiveGroup.Builder ways = Osmformat.PrimitiveGroup.newBuilder();
 
     /**
+     * Block-wide string table encoder.
+     */
+    private final StringTableEncoder stringEncoder;
+
+    /**
      * Default constructor.
      */
-    public WayEncoder() {
+    public WayEncoder(StringTableEncoder stringTableEncoder) {
         super();
+        this.stringEncoder = stringTableEncoder;
     }
 
     /**
@@ -47,8 +53,8 @@ public final class WayEncoder extends OsmEntityEncoder<Way> {
         way.setId(w.getId());
 
         w.getTags().forEach((k, v) -> {
-            way.addKeys(this.getStringIndex(k));
-            way.addVals(this.getStringIndex(v));
+            way.addKeys(stringEncoder.getStringIndex(k));
+            way.addVals(stringEncoder.getStringIndex(v));
         });
         tagsLength = tagsLength + w.getTags().size() * MEMBER_ENTRY_SIZE;
 
@@ -71,13 +77,13 @@ public final class WayEncoder extends OsmEntityEncoder<Way> {
      */
     @Override
     public int estimateSize() {
-        return this.getStringSize() + membersLength + tagsLength + ways.getWaysCount() * MEMBER_ENTRY_SIZE;
+        return stringEncoder.getStringSize() + membersLength + tagsLength + ways.getWaysCount() * MEMBER_ENTRY_SIZE;
     }
 
     @Override
     protected byte[] writeImpl() {
         return Osmformat.PrimitiveBlock.newBuilder()
-                .setStringtable(this.getStrings())
+                .setStringtable(stringEncoder.getStrings())
                 .addPrimitivegroup(ways)
                 .build()
                 .toByteArray();

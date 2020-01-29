@@ -1,10 +1,7 @@
 package com.wolt.osm.parallelpbf.io;
 
 import com.wolt.osm.parallelpbf.blob.BlobWriter;
-import com.wolt.osm.parallelpbf.encoder.DenseNodesEncoder;
-import com.wolt.osm.parallelpbf.encoder.OsmEntityEncoder;
-import com.wolt.osm.parallelpbf.encoder.RelationEncoder;
-import com.wolt.osm.parallelpbf.encoder.WayEncoder;
+import com.wolt.osm.parallelpbf.encoder.*;
 import com.wolt.osm.parallelpbf.entity.Node;
 import com.wolt.osm.parallelpbf.entity.OsmEntity;
 import com.wolt.osm.parallelpbf.entity.Relation;
@@ -54,6 +51,12 @@ public final class OSMWriter implements Runnable {
     private OsmEntityEncoder<Relation> relationEncoder;
 
     /**
+     * Block-wide stringtable encoder.
+     */
+    private StringTableEncoder stringEncoder;
+
+
+    /**
      * Writes contents of dense nodes encoder to the writer
      * and resets encoder.
      * @param <T> Type of encoder to flush.
@@ -88,21 +91,25 @@ public final class OSMWriter implements Runnable {
      * NodesEncoder reset/create function.
      */
     private void nodesReset() {
-        this.nodesEncoder = new DenseNodesEncoder();
+        this.nodesEncoder = new DenseNodesEncoder(stringEncoder);
     }
 
     /**
      * WaysEncoder reset/create function.
      */
     private void wayReset() {
-        this.wayEncoder = new WayEncoder();
+        this.wayEncoder = new WayEncoder(stringEncoder);
     }
 
     /**
      * WaysEncoder reset/create function.
      */
     private void relationReset() {
-        this.relationEncoder = new RelationEncoder();
+        this.relationEncoder = new RelationEncoder(stringEncoder);
+    }
+
+    private void stringReset() {
+        this.stringEncoder = new StringTableEncoder();
     }
 
     /**
@@ -113,6 +120,7 @@ public final class OSMWriter implements Runnable {
     public OSMWriter(final BlobWriter output, final LinkedBlockingQueue<OsmEntity> queue) {
         this.writer = output;
         this.writeQueue = queue;
+        stringReset();
         nodesReset();
         wayReset();
         relationReset();

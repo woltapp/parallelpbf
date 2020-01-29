@@ -4,17 +4,25 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.wolt.osm.parallelpbf.entity.Node;
 import crosby.binary.Osmformat;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class DenseNodesEncoderTest {
+    private StringTableEncoder stringEncoder;
+
+    @BeforeEach
+    public void setUp() {
+        stringEncoder = new StringTableEncoder();
+    }
+
     @Test
     public void testNodeSize() {
         Node node = new Node(1, 100.0, 500.0);
         node.getTags().put("test", "test");
 
-        DenseNodesEncoder testedObject = new DenseNodesEncoder();
+        DenseNodesEncoder testedObject = new DenseNodesEncoder(stringEncoder);
         testedObject.add(node);
 
         assertEquals(40, testedObject.estimateSize());
@@ -26,7 +34,7 @@ class DenseNodesEncoderTest {
         Node node = new Node(1, 10.0, 50.0);
         node.getTags().put(str, str);
 
-        DenseNodesEncoder testedObject = new DenseNodesEncoder();
+        DenseNodesEncoder testedObject = new DenseNodesEncoder(stringEncoder);
         testedObject.add(node);
         byte[] blob = testedObject.write();
 
@@ -60,7 +68,7 @@ class DenseNodesEncoderTest {
         Node node3 = new Node(2, 60.0, 30.0);
         node3.getTags().put(str, str);
 
-        DenseNodesEncoder testedObject = new DenseNodesEncoder();
+        DenseNodesEncoder testedObject = new DenseNodesEncoder(stringEncoder);
         testedObject.add(node1);
         testedObject.add(node2);
         testedObject.add(node3);
@@ -80,17 +88,5 @@ class DenseNodesEncoderTest {
         assertEquals(600000000, actual.getLon(0));
         assertEquals(-400000000, actual.getLon(1));
         assertEquals(100000000, actual.getLon(2));
-    }
-
-    @Test
-    public void testNoUseAfterWrite() {
-        String str = "test";
-        Node node = new Node(1, 10.0, 50.0);
-        node.getTags().put(str, str);
-
-        DenseNodesEncoder testedObject = new DenseNodesEncoder();
-        testedObject.add(node);
-        testedObject.write();
-        assertThrows(IllegalStateException.class, () -> testedObject.add(node));
     }
 }

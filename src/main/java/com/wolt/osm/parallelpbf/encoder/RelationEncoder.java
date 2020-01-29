@@ -35,6 +35,15 @@ public final class RelationEncoder extends OsmEntityEncoder<Relation> {
      */
     private Osmformat.PrimitiveGroup.Builder relations = Osmformat.PrimitiveGroup.newBuilder();
 
+    /**
+     * Block-wide string table encoder.
+     */
+    private final StringTableEncoder stringEncoder;
+
+    public RelationEncoder(StringTableEncoder stringTableEncoder) {
+        this.stringEncoder = stringTableEncoder;
+    }
+
     @Override
     protected void addImpl(final Relation r) {
         Osmformat.Relation.Builder relation = Osmformat.Relation.newBuilder();
@@ -42,14 +51,14 @@ public final class RelationEncoder extends OsmEntityEncoder<Relation> {
         relation.setId(r.getId());
 
         r.getTags().forEach((k, v) -> {
-            relation.addKeys(this.getStringIndex(k));
-            relation.addVals(this.getStringIndex(v));
+            relation.addKeys(stringEncoder.getStringIndex(k));
+            relation.addVals(stringEncoder.getStringIndex(v));
         });
         tagsLength = tagsLength + r.getTags().size() * MEMBER_ENTRY_SIZE;
 
         long member = 0;
         for (RelationMember rm : r.getMembers()) {
-            relation.addRolesSid(getStringIndex(rm.getRole()));
+            relation.addRolesSid(stringEncoder.getStringIndex(rm.getRole()));
             relation.addMemids(rm.getId() - member);
             member = rm.getId();
             relation.addTypes(Osmformat.Relation.MemberType.valueOf(rm.getType().ordinal()));
@@ -61,13 +70,13 @@ public final class RelationEncoder extends OsmEntityEncoder<Relation> {
 
     @Override
     public int estimateSize() {
-        return relations.getRelationsCount() * MEMBER_ENTRY_SIZE + this.getStringSize() + membersLength + tagsLength;
+        return relations.getRelationsCount() * MEMBER_ENTRY_SIZE + stringEncoder.getStringSize() + membersLength + tagsLength;
     }
 
     @Override
     protected byte[] writeImpl() {
         return Osmformat.PrimitiveBlock.newBuilder()
-                .setStringtable(this.getStrings())
+                .setStringtable(stringEncoder.getStrings())
                 .addPrimitivegroup(relations)
                 .build()
                 .toByteArray();

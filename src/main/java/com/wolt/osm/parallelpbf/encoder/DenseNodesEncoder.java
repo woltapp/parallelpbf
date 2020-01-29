@@ -23,6 +23,11 @@ public final class DenseNodesEncoder extends OsmEntityEncoder<Node> {
     private static final int NODE_ENTRY_SIZE = 24;
 
     /**
+     * Block-wide string table encoder.
+     */
+    private final StringTableEncoder stringEncoder;
+
+    /**
      * Current value of NodeId for delta coding.
      */
     private long id = 0;
@@ -45,8 +50,10 @@ public final class DenseNodesEncoder extends OsmEntityEncoder<Node> {
     /**
      * Default constructor.
      */
-    public DenseNodesEncoder() {
+    public DenseNodesEncoder(final StringTableEncoder stringTableEncoder)
+    {
         super();
+        this.stringEncoder = stringTableEncoder;
     }
 
     /**
@@ -57,8 +64,8 @@ public final class DenseNodesEncoder extends OsmEntityEncoder<Node> {
     @Override
     protected void addImpl(final Node node) {
         node.getTags().forEach((k, v) -> {
-            nodes.addKeysVals(getStringIndex(k));
-            nodes.addKeysVals(getStringIndex(v));
+            nodes.addKeysVals(stringEncoder.getStringIndex(k));
+            nodes.addKeysVals(stringEncoder.getStringIndex(v));
         });
         nodes.addKeysVals(0); //Index zero means 'end of tags for node'
 
@@ -83,7 +90,7 @@ public final class DenseNodesEncoder extends OsmEntityEncoder<Node> {
      */
     @Override
     public int estimateSize() {
-        return this.getStringSize() + nodes.getIdCount() * NODE_ENTRY_SIZE + nodes.getKeysValsCount() * TAG_ENTRY_SIZE;
+        return stringEncoder.getStringSize() + nodes.getIdCount() * NODE_ENTRY_SIZE + nodes.getKeysValsCount() * TAG_ENTRY_SIZE;
     }
 
     @Override
@@ -93,7 +100,7 @@ public final class DenseNodesEncoder extends OsmEntityEncoder<Node> {
                 .setGranularity(GRANULARITY)
                 .setLatOffset(0)
                 .setLonOffset(0)
-                .setStringtable(this.getStrings())
+                .setStringtable(stringEncoder.getStrings())
                 .addPrimitivegroup(nodesGroup)
                 .build()
                 .toByteArray();

@@ -5,12 +5,19 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.wolt.osm.parallelpbf.entity.Relation;
 import com.wolt.osm.parallelpbf.entity.RelationMember;
 import crosby.binary.Osmformat;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class RelationEncoderTest {
+    private StringTableEncoder stringEncoder;
+
+    @BeforeEach
+    public void setUp() {
+        stringEncoder = new StringTableEncoder();
+    }
+
     @Test
     void testRelationSize() {
         RelationMember member = new RelationMember(2L, "test", RelationMember.Type.WAY);
@@ -18,7 +25,7 @@ class RelationEncoderTest {
         relation.getTags().put("test", "test");
         relation.getMembers().add(member);
 
-        RelationEncoder testedObject = new RelationEncoder();
+        RelationEncoder testedObject = new RelationEncoder(stringEncoder);
         testedObject.add(relation);
 
         assertEquals(33, testedObject.estimateSize());
@@ -36,7 +43,7 @@ class RelationEncoderTest {
         relation.getMembers().add(member2);
         relation.getMembers().add(member3);
 
-        RelationEncoder testedObject = new RelationEncoder();
+        RelationEncoder testedObject = new RelationEncoder(stringEncoder);
         testedObject.add(relation);
 
         byte[] blob = testedObject.write();
@@ -64,15 +71,4 @@ class RelationEncoderTest {
         assertEquals(1, r.getMemids(1));
         assertEquals(3, r.getMemids(2));
     }
-
-    @Test
-    public void testNoUseAfterWrite() {
-        Relation relation = new Relation(1L);
-
-        RelationEncoder testedObject = new RelationEncoder();
-        testedObject.add(relation);
-        testedObject.write();
-        assertThrows(IllegalStateException.class, () -> testedObject.add(relation));
-    }
-
 }
