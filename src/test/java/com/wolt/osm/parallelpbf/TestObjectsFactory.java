@@ -17,7 +17,7 @@
 
 package com.wolt.osm.parallelpbf;
 
-import com.wolt.osm.parallelpbf.entity.Info;
+import com.wolt.osm.parallelpbf.entity.*;
 import com.google.protobuf.ByteString;
 import crosby.binary.Osmformat;
 
@@ -76,4 +76,33 @@ public class TestObjectsFactory {
             .build();
 
     public static final Osmformat.ChangeSet changesetMessage = Osmformat.ChangeSet.newBuilder().setId(1).build();
+
+    public static final String testTag = "test";
+
+    public static Node node() {
+        Node node = new Node(1, 10.0, 50.0);
+        node.getTags().put(testTag, testTag);
+        return node;
+    }
+
+    public static Way way() {
+        Way way = new Way(1L);
+        way.getTags().put(TestObjectsFactory.testTag, TestObjectsFactory.testTag);
+        way.getNodes().add(3L);
+        way.getNodes().add(6L);
+        way.getNodes().add(2L);
+        return way;
+    }
+
+    public static Relation relation() {
+        RelationMember member1 = new RelationMember(2L, "test", RelationMember.Type.WAY);
+        RelationMember member2 = new RelationMember(3L, "forward", RelationMember.Type.RELATION);
+        RelationMember member3 = new RelationMember(6L, "stop", RelationMember.Type.NODE);
+        Relation relation = new Relation(1L);
+        relation.getTags().put(TestObjectsFactory.testTag, TestObjectsFactory.testTag);
+        relation.getMembers().add(member1);
+        relation.getMembers().add(member2);
+        relation.getMembers().add(member3);
+        return relation;
+    }
 }

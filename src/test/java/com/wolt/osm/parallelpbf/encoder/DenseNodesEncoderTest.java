@@ -1,5 +1,6 @@
 package com.wolt.osm.parallelpbf.encoder;
 
+import com.wolt.osm.parallelpbf.TestObjectsFactory;
 import com.wolt.osm.parallelpbf.entity.Node;
 import crosby.binary.Osmformat;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,23 +18,16 @@ class DenseNodesEncoderTest {
 
     @Test
     public void testNodeSize() {
-        Node node = new Node(1, 100.0, 500.0);
-        node.getTags().put("test", "test");
-
         DenseNodesEncoder testedObject = new DenseNodesEncoder(stringEncoder);
-        testedObject.add(node);
+        testedObject.add(TestObjectsFactory.node());
 
         assertEquals(36, testedObject.estimateSize());
     }
 
     @Test
     public void testWrite() {
-        String str = "test";
-        Node node = new Node(1, 10.0, 50.0);
-        node.getTags().put(str, str);
-
         DenseNodesEncoder testedObject = new DenseNodesEncoder(stringEncoder);
-        testedObject.add(node);
+        testedObject.add(TestObjectsFactory.node());
         Osmformat.PrimitiveGroup actual = testedObject.write().build();
 
         Osmformat.DenseNodes nodes = actual.getDense();
@@ -48,13 +42,12 @@ class DenseNodesEncoderTest {
 
     @Test
     public void testDeltaCoding() {
-        String str = "test";
         Node node1 = new Node(3, 20.0, 60.0);
-        node1.getTags().put(str, str);
+        node1.getTags().put(TestObjectsFactory.testTag, TestObjectsFactory.testTag);
         Node node2 = new Node(6, 30.0, 20.0);
-        node2.getTags().put(str, str);
+        node2.getTags().put(TestObjectsFactory.testTag, TestObjectsFactory.testTag);
         Node node3 = new Node(2, 60.0, 30.0);
-        node3.getTags().put(str, str);
+        node3.getTags().put(TestObjectsFactory.testTag, TestObjectsFactory.testTag);
 
         DenseNodesEncoder testedObject = new DenseNodesEncoder(stringEncoder);
         testedObject.add(node1);

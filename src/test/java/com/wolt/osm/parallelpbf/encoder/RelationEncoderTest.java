@@ -1,5 +1,6 @@
 package com.wolt.osm.parallelpbf.encoder;
 
+import com.wolt.osm.parallelpbf.TestObjectsFactory;
 import com.wolt.osm.parallelpbf.entity.Relation;
 import com.wolt.osm.parallelpbf.entity.RelationMember;
 import crosby.binary.Osmformat;
@@ -18,31 +19,16 @@ class RelationEncoderTest {
 
     @Test
     void testRelationSize() {
-        RelationMember member = new RelationMember(2L, "test", RelationMember.Type.WAY);
-        Relation relation = new Relation(1L);
-        relation.getTags().put("test", "test");
-        relation.getMembers().add(member);
-
         RelationEncoder testedObject = new RelationEncoder(stringEncoder);
-        testedObject.add(relation);
+        testedObject.add(TestObjectsFactory.relation());
 
-        assertEquals(29, testedObject.estimateSize());
+        assertEquals(55, testedObject.estimateSize());
     }
 
     @Test
     public void testWrite() {
-        String str = "test";
-        RelationMember member1 = new RelationMember(2L, "test", RelationMember.Type.WAY);
-        RelationMember member2 = new RelationMember(3L, "forward", RelationMember.Type.RELATION);
-        RelationMember member3 = new RelationMember(6L, "stop", RelationMember.Type.NODE);
-        Relation relation = new Relation(1L);
-        relation.getTags().put(str, str);
-        relation.getMembers().add(member1);
-        relation.getMembers().add(member2);
-        relation.getMembers().add(member3);
-
         RelationEncoder testedObject = new RelationEncoder(stringEncoder);
-        testedObject.add(relation);
+        testedObject.add(TestObjectsFactory.relation());
 
         Osmformat.PrimitiveGroup actual = testedObject.write().build();
 

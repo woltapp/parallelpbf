@@ -1,6 +1,6 @@
 package com.wolt.osm.parallelpbf.encoder;
 
-import com.wolt.osm.parallelpbf.entity.Way;
+import com.wolt.osm.parallelpbf.TestObjectsFactory;
 import crosby.binary.Osmformat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,29 +17,16 @@ class WayEncoderTest {
 
     @Test
     public void testWaySize() {
-        Way way = new Way(1L);
-        way.getTags().put("test", "test");
-        way.getNodes().add(3L);
-        way.getNodes().add(6L);
-        way.getNodes().add(2L);
-
         WayEncoder testedObject = new WayEncoder(stringEncoder);
-        testedObject.add(way);
+        testedObject.add(TestObjectsFactory.way());
 
         assertEquals(40, testedObject.estimateSize());
     }
 
     @Test
     public void testWrite() {
-        String str = "test";
-        Way way = new Way(1L);
-        way.getTags().put(str, str);
-        way.getNodes().add(3L);
-        way.getNodes().add(6L);
-        way.getNodes().add(2L);
-
         WayEncoder testedObject = new WayEncoder(stringEncoder);
-        testedObject.add(way);
+        testedObject.add(TestObjectsFactory.way());
 
         Osmformat.PrimitiveGroup actual = testedObject.write().build();
 

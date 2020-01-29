@@ -2,11 +2,11 @@ package com.wolt.osm.parallelpbf.io;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.wolt.osm.parallelpbf.TestObjectsFactory;
 import com.wolt.osm.parallelpbf.blob.BlobWriter;
 import com.wolt.osm.parallelpbf.encoder.OsmEncoder;
 import com.wolt.osm.parallelpbf.entity.*;
 import crosby.binary.Osmformat;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +15,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class OSMWriterTest {
 
@@ -37,6 +38,12 @@ class OSMWriterTest {
         }
     }
 
+    private static class FakeEntity extends OsmEntity {
+        public FakeEntity(long id) {
+            super(id);
+        }
+    }
+
     @BeforeEach
     void setUp() {
         output = new ByteArrayOutputStream();
@@ -44,22 +51,21 @@ class OSMWriterTest {
         queue = new LinkedBlockingQueue<>();
     }
 
-    @Test
-    void testWriteStrings() throws InterruptedException, InvalidProtocolBufferException {
-        String str = "test";
-        Way way = new Way(1L);
-        way.getTags().put(str, str);
-        way.getNodes().add(3L);
-
+    private void writeEntity(OsmEntity entity) throws InterruptedException {
         Thread testedObject = new Thread(new OSMWriter(writer, queue));
         testedObject.start();
 
-        queue.put(way);
+        queue.put(entity);
         while(!queue.isEmpty()) {
             Thread.sleep(1);
         }
         testedObject.interrupt();
         testedObject.join();
+    }
+
+    @Test
+    void testWriteStrings() throws InterruptedException, InvalidProtocolBufferException {
+        writeEntity(TestObjectsFactory.way());
 
         byte[] blob = output.toByteArray();
 
@@ -67,22 +73,12 @@ class OSMWriterTest {
 
         Osmformat.StringTable stringTable  = block.getStringtable();
         assertEquals(ByteString.EMPTY, stringTable.getS(0));
-        assertEquals(str, stringTable.getS(1).toStringUtf8());
+        assertEquals(TestObjectsFactory.testTag, stringTable.getS(1).toStringUtf8());
     }
 
     @Test
     void testNodeSetsGranularity() throws InterruptedException, InvalidProtocolBufferException {
-        Node node = new Node(1, 100.0, 500.0);
-
-        Thread testedObject = new Thread(new OSMWriter(writer, queue));
-        testedObject.start();
-
-        queue.put(node);
-        while(!queue.isEmpty()) {
-            Thread.sleep(1);
-        }
-        testedObject.interrupt();
-        testedObject.join();
+        writeEntity(TestObjectsFactory.node());
 
         byte[] blob = output.toByteArray();
 
@@ -95,19 +91,7 @@ class OSMWriterTest {
 
     @Test
     void testNoNodeNoGranularity() throws InterruptedException, InvalidProtocolBufferException {
-        Way way = new Way(1L);
-        way.getNodes().add(3L);
-
-
-        Thread testedObject = new Thread(new OSMWriter(writer, queue));
-        testedObject.start();
-
-        queue.put(way);
-        while(!queue.isEmpty()) {
-            Thread.sleep(1);
-        }
-        testedObject.interrupt();
-        testedObject.join();
+        writeEntity(TestObjectsFactory.way());
 
         byte[] blob = output.toByteArray();
 
@@ -120,20 +104,7 @@ class OSMWriterTest {
 
     @Test
     void testWriteRelation() throws InterruptedException, InvalidProtocolBufferException {
-        RelationMember member = new RelationMember(2L, "test", RelationMember.Type.WAY);
-        Relation relation = new Relation(1L);
-        relation.getTags().put("test", "test");
-        relation.getMembers().add(member);
-
-        Thread testedObject = new Thread(new OSMWriter(writer, queue));
-        testedObject.start();
-
-        queue.put(relation);
-        while(!queue.isEmpty()) {
-            Thread.sleep(1);
-        }
-        testedObject.interrupt();
-        testedObject.join();
+        writeEntity(TestObjectsFactory.relation());
 
         byte[] blob = output.toByteArray();
 
@@ -143,23 +114,11 @@ class OSMWriterTest {
         assertFalse(block.getPrimitivegroup(0).getRelationsList().isEmpty());
     }
 
-    private static class FakeEntity extends OsmEntity {
-        public FakeEntity(long id) {
-            super(id);
-        }
-    }
     @Test
     void testNoInvalidEntities() throws InterruptedException {
         FakeEntity entity = new FakeEntity(1L);
-        Thread testedObject = new Thread(new OSMWriter(writer, queue));
-        testedObject.start();
 
-        queue.put(entity);
-        while(!queue.isEmpty()) {
-            Thread.sleep(1);
-        }
-        testedObject.interrupt();
-        testedObject.join();
+        writeEntity(entity);
 
         assertEquals(0, output.toByteArray().length);
     }
