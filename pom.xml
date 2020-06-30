@@ -6,7 +6,7 @@
 
     <groupId>com.wolt.osm</groupId>
     <artifactId>parallelpbf</artifactId>
-    <version>0.3.0</version>
+    <version>0.3.1</version>
     <packaging>jar</packaging>
 
     <name>parallelpbf</name>
@@ -55,18 +55,11 @@
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>geomajas</id>
-            <url>http://maven.geomajas.org/</url>
-        </repository>
-    </repositories>
-
     <dependencies>
         <dependency>
-            <groupId>crosby.binary</groupId>
-            <artifactId>osmpbf</artifactId>
-            <version>1.2.1</version>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>3.12.2</version>
         </dependency>
 
         <dependency>
@@ -198,7 +191,10 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>3.1.12.2</version>
+                <version>4.0.4</version>
+                <configuration>
+                    <excludeFilterFile>${project.basedir}/spotbugsExclude.xml</excludeFilterFile>
+                </configuration>
                 <executions>
                     <execution>
                         <id>validate</id>
@@ -270,6 +266,26 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.github.os72</groupId>
+                <artifactId>protoc-jar-maven-plugin</artifactId>
+                <version>3.11.4</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <protocVersion>3.12.3</protocVersion>
+                            <inputDirectories>
+                                <include>${project.basedir}/src/main/proto</include>
+                            </inputDirectories>
+                            <outputDirectory>${project.build.directory}/generated-sources</outputDirectory>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

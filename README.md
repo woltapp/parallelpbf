@@ -10,7 +10,7 @@ The OSMPBF format consists of sequence of independent blobs, containing actual O
 of OSMPBF format read that file sequentially, processing each blob one by one using just a single thread. 
 Parsing single blob usually involves decompressing it and calculating OSM entity values from a delta-packed
 data ([check wiki](https://wiki.openstreetmap.org/wiki/PBF_Format) for details). Obviously it is more
-CPU bound task, than IO bound task, so loading CPU up should speed up the processing. Simplest way to do that
+CPU bound task, than IO bound task, so loading CPU up should speed up the processing. The Simplest way to do that
 is to distribute the work on all the cores. And here we go...
 
 ## Download
@@ -20,20 +20,20 @@ is to distribute the work on all the cores. And here we go...
         <dependency>
             <groupId>com.wolt.osm</groupId>
             <artifactId>parallelpbf</artifactId>
-            <version>0.3.0</version>
+            <version>0.3.1</version>
         </dependency>
         
 ### Gradle
 
-        compile group: 'com.wolt.osm', name: 'parallelpbf', version: '0.3.0'
+        compile group: 'com.wolt.osm', name: 'parallelpbf', version: '0.3.1'
         
 ### SBT 
                         
-        libraryDependencies += "com.wolt.osm" % "parallelpbf" % "0.3.0"
+        libraryDependencies += "com.wolt.osm" % "parallelpbf" % "0.3.1"
         
 ### Github release
 
-        https://github.com/woltapp/parallelpbf/releases/tag/v0.3.0
+        https://github.com/woltapp/parallelpbf/releases/tag/v0.3.1
         
 ## Reading                
         
@@ -158,7 +158,9 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 ## Authors
 
 * **Denis Chaplygin** - *Initial work* - [akashihi](https://github.com/akashihi)
+* **Scott Crosby** - *.proto definition files* - [scrosby](https://github.com/openstreetmap/OSM-binary) 
 
 ## License
 
 This project is licensed under the GPLv3 License - see the LICENSE file for details.
+The .proto definition files are licensed under the MIT license.
