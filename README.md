@@ -158,7 +158,9 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 ## Authors
 
 * **Denis Chaplygin** - *Initial work* - [akashihi](https://github.com/akashihi)
+* **Scott Crosby** - *.proto definition files* - [scrosby](https://github.com/openstreetmap/OSM-binary) 
 
 ## License
 
 This project is licensed under the GPLv3 License - see the LICENSE file for details.
+The .proto definition files are licensed under the MIT license.
