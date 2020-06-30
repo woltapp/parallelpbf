@@ -1,7 +1,12 @@
 package com.wolt.osm.parallelpbf.io;
 
 import com.wolt.osm.parallelpbf.blob.BlobWriter;
-import com.wolt.osm.parallelpbf.encoder.*;
+import com.wolt.osm.parallelpbf.encoder.OsmEntityEncoder;
+import com.wolt.osm.parallelpbf.encoder.StringTableEncoder;
+import com.wolt.osm.parallelpbf.encoder.OsmEncoder;
+import com.wolt.osm.parallelpbf.encoder.DenseNodesEncoder;
+import com.wolt.osm.parallelpbf.encoder.WayEncoder;
+import com.wolt.osm.parallelpbf.encoder.RelationEncoder;
 import com.wolt.osm.parallelpbf.entity.Node;
 import com.wolt.osm.parallelpbf.entity.OsmEntity;
 import com.wolt.osm.parallelpbf.entity.Relation;
