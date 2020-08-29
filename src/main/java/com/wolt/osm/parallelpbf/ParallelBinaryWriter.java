@@ -67,7 +67,7 @@ public class ParallelBinaryWriter implements Closeable {
     }
 
     /**
-     * Starts reading threads.
+     * Starts writing threads.
      */
     public void start() {
         for (int indx = 0; indx < this.threads; ++indx) {

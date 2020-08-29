@@ -102,13 +102,13 @@ public final class ParallelBinaryParser {
     private final int shard;
 
     /**
-     * A submitted task limiter. While executor can limit number of running tasks to the number of runnign threads,
-     * we do not want to submit to many tasks, as each task consumes some RAM for the blob data and OSM PBF can be
+     * A submitted task limiter. While executor can limit number of running tasks to the number of running threads,
+     * we do not want to submit too many tasks, as each task consumes some RAM for the blob data and OSM PBF can be
      * tens of gigabytes, so clearly will not fit to the RAM.
      *
      * To achieve that we set the limit of the task limiter semaphore to the number of thread and each submitted task
      * increases semaphore value. At the same time, on completion each task decreases semaphore value. As submission
-     * is a syncrhonours process and executed in the same thread, that reads blobs from the stream,
+     * is a synchronous process and executed in the same thread, that reads blobs from the stream,
      * it will automatically block stream until there will be place in the threads pool.
      */
     private final Semaphore tasksLimiter;
@@ -187,7 +187,7 @@ public final class ParallelBinaryParser {
     }
 
     /**
-     * Processses blob with osm data asynchronously.
+     * Processes blob with osm data asynchronously.
      *
      * @param information Blob's size and type,
      * @return Processing results in form of Optional Future. Empty Optional
@@ -342,7 +342,7 @@ public final class ParallelBinaryParser {
      * In case of successful completion onComplete callback will be called and it is guaranteed, that
      * all previous callback call will be finished earlier and they will not be called after onComplete.
      *
-     * There is no non-blockin version of that method, but you can safely run it in a separate runnable
+     * There is no non-blocking version of that method, but you can safely run it in a separate runnable
      * for that purpose.
      */
     public void parse() {
