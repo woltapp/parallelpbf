@@ -16,24 +16,30 @@ is to distribute the work on all the cores. And here we go...
 ## Download
 
 ### Maven 
-        
-        <dependency>
-            <groupId>com.wolt.osm</groupId>
-            <artifactId>parallelpbf</artifactId>
-            <version>0.3.1</version>
-        </dependency>
+
+```xml
+<dependency>
+    <groupId>com.wolt.osm</groupId>
+    <artifactId>parallelpbf</artifactId>
+    <version>0.3.1</version>
+</dependency>
+```
         
 ### Gradle
 
-        compile group: 'com.wolt.osm', name: 'parallelpbf', version: '0.3.1'
+```gradle
+compile group: 'com.wolt.osm', name: 'parallelpbf', version: '0.3.1'
+```
         
 ### SBT 
-                        
-        libraryDependencies += "com.wolt.osm" % "parallelpbf" % "0.3.1"
-        
-### Github release
 
-        https://github.com/woltapp/parallelpbf/releases/tag/v0.3.1
+```sbt
+libraryDependencies += "com.wolt.osm" % "parallelpbf" % "0.3.1"
+```
+        
+### GitHub release
+
+→ https://github.com/woltapp/parallelpbf/releases/tag/v0.3.1
         
 ## Reading                
         
@@ -62,19 +68,20 @@ to finish before calling `onComplete` and no other callbacks will happen after `
 
 Callbacks can be attached to the parser using appropriate calls:
 
-                InputStream input = Thread.currentThread().getContextClassLoader()
-                        .getResourceAsStream("sample.pbf");
-        
-                new ParallelBinaryParser(input, 1)
-                        .onHeader(this::processHeader)
-                        .onBoundBox(this::processBoundingBox)
-                        .onComplete(this::printOnCompletions)
-                        .onNode(this::processNodes)
-                        .onWay(this::processWays)
-                        .onRelation(this::processRelations)
-                        .onChangeset(this::processChangesets)
-                        .parse();
+```java
+InputStream input = Thread.currentThread().getContextClassLoader()
+        .getResourceAsStream("sample.pbf");
 
+new ParallelBinaryParser(input, 1)
+        .onHeader(this::processHeader)
+        .onBoundBox(this::processBoundingBox)
+        .onComplete(this::printOnCompletions)
+        .onNode(this::processNodes)
+        .onWay(this::processWays)
+        .onRelation(this::processRelations)
+        .onChangeset(this::processChangesets)
+        .parse();
+```
 
 All callbacks are optional, if you do not set some callback, nothing will break. Parsing of data for missing callback 
 will be skipped. So, for example, if you need just relations data, you should not set other callbacks and data blocks carrying
@@ -130,10 +137,12 @@ so can be used from parallel threads.
 
 So the correct workflow will be:
 
-        writer = new ParallelBinaryWriter(output,1, bbox);
-        writer.start();
-        writer.write(node);
-        writer.close();
+```java
+writer = new ParallelBinaryWriter(output,1, bbox);
+writer.start();
+writer.write(node);
+writer.close();
+```
 
 `ParallelBinaryWriter` accepts two mandatory arguments and one optional:
 
