@@ -54,7 +54,9 @@ public final class RelationParser extends BaseParser<Osmformat.Relation, Consume
             relation.getMembers().add(member);
         }
 
-        log.debug(relation.toString());
+        if (log.isDebugEnabled()) {
+            log.debug(relation.toString());
+        }
         getCallback().accept(relation);
     }
 }
