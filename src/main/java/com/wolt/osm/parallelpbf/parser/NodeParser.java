@@ -88,7 +88,9 @@ public final class NodeParser extends BaseParser<Osmformat.Node, Consumer<Node>>
         Node node = new Node(message.getId(), latitude, longitude);
         node.setTags(parseTags(message.getKeysList(), message.getValsList()));
         node.setInfo(parseInfo(message));
-        log.debug(node.toString());
+        if (log.isDebugEnabled()) {
+            log.debug(node.toString());
+        }
         getCallback().accept(node);
     }
 
@@ -143,7 +145,9 @@ public final class NodeParser extends BaseParser<Osmformat.Node, Consumer<Node>>
                 Info info = new Info(uid, username, version, timestamp * dateGranularity, changeset, visible);
                 node.setInfo(info);
             }
-            log.debug(node.toString());
+            if (log.isDebugEnabled()) {
+                log.debug(node.toString());
+            }
             getCallback().accept(node);
 
         }
