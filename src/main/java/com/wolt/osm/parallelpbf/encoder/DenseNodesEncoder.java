@@ -89,6 +89,11 @@ public final class DenseNodesEncoder extends OsmEntityEncoder<Node> {
 
     @Override
     protected Osmformat.PrimitiveGroup.Builder writeImpl() {
+        if (nodes.getKeysValsList().stream().noneMatch(i -> i != 0)) {
+            // Exceptional case - all nodes in the block are tagless, meaning
+            // that tags array must be empty
+            nodes.clearKeysVals();
+        }
         return Osmformat.PrimitiveGroup.newBuilder().setDense(nodes);
     }
 }
