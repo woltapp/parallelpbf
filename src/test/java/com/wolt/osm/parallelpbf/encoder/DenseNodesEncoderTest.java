@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DenseNodesEncoderTest {
     private StringTableEncoder stringEncoder;
@@ -38,6 +39,36 @@ class DenseNodesEncoderTest {
         assertEquals(1, nodes.getKeysVals(0));
         assertEquals(1, nodes.getKeysVals(1));
         assertEquals(0, nodes.getKeysVals(2));
+    }
+
+    @Test
+    public void testTaglessWrite() {
+        Node node = TestObjectsFactory.node();
+        node.getTags().clear();
+        DenseNodesEncoder testedObject = new DenseNodesEncoder(stringEncoder);
+        testedObject.add(node);
+        testedObject.add(node);
+        Osmformat.PrimitiveGroup actual = testedObject.write().build();
+
+        Osmformat.DenseNodes nodes = actual.getDense();
+        assertEquals(0, nodes.getKeysValsCount());
+    }
+
+    @Test
+    public void testTagMixWrite() {
+        Node node = TestObjectsFactory.node();
+        node.getTags().clear();
+        DenseNodesEncoder testedObject = new DenseNodesEncoder(stringEncoder);
+        testedObject.add(node);
+        testedObject.add(TestObjectsFactory.node());
+        Osmformat.PrimitiveGroup actual = testedObject.write().build();
+
+        Osmformat.DenseNodes nodes = actual.getDense();
+        assertEquals(4, nodes.getKeysValsCount());
+        assertEquals(0, nodes.getKeysVals(0));
+        assertEquals(1, nodes.getKeysVals(1));
+        assertEquals(1, nodes.getKeysVals(2));
+        assertEquals(0, nodes.getKeysVals(3));
     }
 
     @Test
