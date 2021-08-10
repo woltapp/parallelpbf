@@ -38,5 +38,10 @@ class WayEncoderTest {
         assertEquals(3, w.getRefs(0));
         assertEquals(3, w.getRefs(1));
         assertEquals(-4, w.getRefs(2));
+
+        assertEquals(3, w.getInfo().getVersion());
+        assertEquals(5, w.getInfo().getChangeset());
+        assertEquals(1, w.getInfo().getUid());
+        assertEquals(true, w.getInfo().getVisible());
     }
 }
