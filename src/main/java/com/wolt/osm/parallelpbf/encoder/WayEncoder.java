@@ -1,6 +1,5 @@
 package com.wolt.osm.parallelpbf.encoder;
 
-import com.wolt.osm.parallelpbf.entity.Info;
 import com.wolt.osm.parallelpbf.entity.Way;
 import crosby.binary.Osmformat;
 
@@ -59,15 +58,15 @@ public final class WayEncoder extends OsmEntityEncoder<Way> {
 
         tagsLength = tagsLength + w.getTags().size() * MEMBER_ENTRY_SIZE;
 
-        crosby.binary.Osmformat.Info info =
-                w.getInfo()!=null ? Osmformat.Info.getDefaultInstance().toBuilder()
+        Osmformat.Info info =
+                w.getInfo() != null ? Osmformat.Info.getDefaultInstance().toBuilder()
                 .setChangeset(w.getInfo().getChangeset())
                 .setTimestamp(w.getInfo().getTimestamp())
                 .setUid(w.getInfo().getUid())
                 .setUserSid(stringEncoder.getStringIndex(w.getInfo().getUsername()))
                 .setVersion(w.getInfo().getVersion())
                 .setVisible(w.getInfo().isVisible())
-                .build(): Osmformat.Info.getDefaultInstance();
+                .build() : Osmformat.Info.getDefaultInstance();
         way.setInfo(info);
 
         long member = 0;
