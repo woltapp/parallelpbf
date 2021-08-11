@@ -88,7 +88,7 @@ public final class WayEncoder extends OsmEntityEncoder<Way> {
      */
     @Override
     public int estimateSize() {
-        return membersLength + tagsLength + ( ways.getWaysCount() * MEMBER_ENTRY_SIZE);
+        return membersLength + tagsLength + ways.getWaysCount() * MEMBER_ENTRY_SIZE;
     }
 
     @Override
