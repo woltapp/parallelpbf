@@ -71,15 +71,6 @@ public final class RelationEncoder extends OsmEntityEncoder<Relation> {
                 .build() : Osmformat.Info.getDefaultInstance();
         relation.setInfo(info);
 
-//        if(r.getInfo() != null) {
-//            r.setInfo(new Info(r.getInfo().getUid(),
-//                r.getInfo().getUsername(),
-//                r.getInfo().getVersion(),
-//                r.getInfo().getTimestamp(),
-//                r.getInfo().getChangeset(),
-//                r.getInfo().isVisible()));
-//        }
-
         long member = 0;
         for (RelationMember rm : r.getMembers()) {
             relation.addRolesSid(stringEncoder.getStringIndex(rm.getRole()));
