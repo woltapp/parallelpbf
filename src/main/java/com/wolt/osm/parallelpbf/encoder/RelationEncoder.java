@@ -1,5 +1,6 @@
 package com.wolt.osm.parallelpbf.encoder;
 
+import com.wolt.osm.parallelpbf.entity.Info;
 import com.wolt.osm.parallelpbf.entity.Relation;
 import com.wolt.osm.parallelpbf.entity.RelationMember;
 import crosby.binary.Osmformat;
@@ -59,6 +60,25 @@ public final class RelationEncoder extends OsmEntityEncoder<Relation> {
             relation.addVals(stringEncoder.getStringIndex(v));
         });
         tagsLength = tagsLength + r.getTags().size() * MEMBER_ENTRY_SIZE;
+
+        Osmformat.Info info = r.getInfo() != null ? Osmformat.Info.newBuilder()
+                .setUserSid(stringEncoder.getStringIndex(r.getInfo().getUsername()))
+                .setVisible(r.getInfo().isVisible())
+                .setUid(r.getInfo().getUid())
+                .setVersion(r.getInfo().getVersion())
+                .setTimestamp(r.getInfo().getTimestamp())
+                .setChangeset(r.getInfo().getChangeset())
+                .build() : Osmformat.Info.getDefaultInstance();
+        relation.setInfo(info);
+
+//        if(r.getInfo() != null) {
+//            r.setInfo(new Info(r.getInfo().getUid(),
+//                r.getInfo().getUsername(),
+//                r.getInfo().getVersion(),
+//                r.getInfo().getTimestamp(),
+//                r.getInfo().getChangeset(),
+//                r.getInfo().isVisible()));
+//        }
 
         long member = 0;
         for (RelationMember rm : r.getMembers()) {
