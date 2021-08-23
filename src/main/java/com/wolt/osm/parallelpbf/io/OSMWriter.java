@@ -61,6 +61,17 @@ public final class OSMWriter implements Runnable {
      */
     private StringTableEncoder stringEncoder;
 
+    private Long encodingNodes = 0L;
+    private Long encodingWays = 0L;
+    private Long encodingRelations = 0L;
+
+    private Long totalNodes = 0L;
+    private Long totalWays = 0L;
+    private Long totalRelations = 0L;
+
+    private Long totalEstimate = 0L;
+    private Long totalFlushTime = 0L;
+
 
     /**
      * Writes contents of encoders to the writer
@@ -71,6 +82,7 @@ public final class OSMWriter implements Runnable {
      * @param relationSize Estimated size of relations group.
      */
     private void flush(final int nodesSize, final int waysSize, final int relationSize) {
+        long startTime = System.currentTimeMillis();
         if (nodesSize + waysSize + relationSize > 0) {
             Osmformat.PrimitiveBlock.Builder block = Osmformat.PrimitiveBlock.newBuilder()
                     .setStringtable(stringEncoder.getStrings());
@@ -91,6 +103,10 @@ public final class OSMWriter implements Runnable {
         }
 
         encodersReset();
+        long endTime = System.currentTimeMillis();
+
+        log.info("Time spent flushing in ms {}", endTime - startTime);
+        totalFlushTime += endTime - startTime;
     }
 
     /**
@@ -122,18 +138,34 @@ public final class OSMWriter implements Runnable {
             try {
                 OsmEntity entity = writeQueue.take();
                 if (entity instanceof Node) {
+                    long startTime = System.nanoTime();
                     nodesEncoder.add((Node) entity);
+                    long endTime = System.nanoTime();
+                    encodingNodes += endTime - startTime;
+                    totalNodes++;
                 } else if (entity instanceof Way) {
+                    long startTime = System.nanoTime();
                     wayEncoder.add((Way) entity);
+                    long endTime = System.nanoTime();
+                    encodingWays += endTime - startTime;
+                    totalWays++;
                 } else if (entity instanceof Relation) {
+                    long startTime = System.nanoTime();
                     relationEncoder.add((Relation) entity);
+                    long endTime = System.nanoTime();
+                    encodingRelations += endTime - startTime;
+                    totalRelations++;
                 } else {
                     log.error("Unknown entity type: {}", entity);
                 }
 
+                long estimateStart = System.currentTimeMillis();
                 int nodesSize = nodesEncoder.estimateSize();
                 int waysSize = wayEncoder.estimateSize();
                 int relationSize = relationEncoder.estimateSize();
+                long estimateEnd = System.currentTimeMillis();
+
+                totalEstimate += estimateEnd - estimateStart;
                 int blobSize = nodesSize + waysSize + relationSize + stringEncoder.getStringSize();
                 if (blobSize > LIMIT_BLOB_SIZE) {
                     flush(nodesSize, waysSize, relationSize);
@@ -141,6 +173,15 @@ public final class OSMWriter implements Runnable {
             } catch (InterruptedException e) {
                 flush(nodesEncoder.estimateSize(), wayEncoder.estimateSize(), relationEncoder.estimateSize());
                 log.debug("OSMWriter requested to stop");
+
+                log.info("Time spend encoding nodes {} seconds ", encodingNodes/1000000000);
+                log.info("Time spend encoding ways {} seconds ", encodingWays/1000000000);
+                log.info("Time spend encoding relations {} seconds ", encodingRelations/1000000000);
+
+                log.info("Total time spent estimating the size in ms {} ", totalEstimate);
+                log.info("Total time spent in flush calls in ms {} ", totalFlushTime);
+
+                log.info("Nodes processed {}, ways processed {}, relations processed {}", totalNodes, totalWays, totalRelations);
                 return;
             }
         }

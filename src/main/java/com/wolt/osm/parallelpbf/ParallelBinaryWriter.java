@@ -60,7 +60,7 @@ public class ParallelBinaryWriter implements Closeable {
     public ParallelBinaryWriter(final OutputStream outputStream, final int noThreads, final BoundBox boundBox) {
         this.writer = new BlobWriter(outputStream);
         this.threads = noThreads;
-        writeQueue = new LinkedBlockingQueue<>(noThreads);
+        writeQueue = new LinkedBlockingQueue<>(1000000);
         if (!writeHeader(boundBox)) {
             throw new RuntimeException("Error while creating writer and writing header");
         }
