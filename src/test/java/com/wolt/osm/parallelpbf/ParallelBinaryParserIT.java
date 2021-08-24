@@ -122,6 +122,8 @@ class ParallelBinaryParserIT {
         assertFalse(taggedRelation.getTags().isEmpty());
         assertTrue(taggedRelation.getTags().containsKey("route"));
         assertEquals("bicycle", taggedRelation.getTags().get("route"));
+        assertNotNull(taggedRelation.getInfo());
+        assertEquals("Mauls", taggedRelation.getInfo().getUsername());
     }
 
     @Test
@@ -145,7 +147,6 @@ class ParallelBinaryParserIT {
         assertEquals(1253397762000L, taggedNode.getInfo().getTimestamp());
         assertEquals(2539009, taggedNode.getInfo().getChangeset());
         assertTrue(taggedNode.getInfo().isVisible());
-
 
         testWay();
         assertEquals(470302, taggedWay.getInfo().getUid());
