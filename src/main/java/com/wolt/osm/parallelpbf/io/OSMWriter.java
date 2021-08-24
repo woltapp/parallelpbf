@@ -1,19 +1,19 @@
 package com.wolt.osm.parallelpbf.io;
 
 import com.wolt.osm.parallelpbf.blob.BlobWriter;
-import com.wolt.osm.parallelpbf.encoder.OsmEntityEncoder;
-import com.wolt.osm.parallelpbf.encoder.StringTableEncoder;
-import com.wolt.osm.parallelpbf.encoder.OsmEncoder;
 import com.wolt.osm.parallelpbf.encoder.DenseNodesEncoder;
-import com.wolt.osm.parallelpbf.encoder.WayEncoder;
+import com.wolt.osm.parallelpbf.encoder.OsmEncoder;
+import com.wolt.osm.parallelpbf.encoder.OsmEntityEncoder;
 import com.wolt.osm.parallelpbf.encoder.RelationEncoder;
+import com.wolt.osm.parallelpbf.encoder.StringTableEncoder;
+import com.wolt.osm.parallelpbf.encoder.WayEncoder;
 import com.wolt.osm.parallelpbf.entity.Node;
 import com.wolt.osm.parallelpbf.entity.OsmEntity;
 import com.wolt.osm.parallelpbf.entity.Relation;
 import com.wolt.osm.parallelpbf.entity.Way;
 import crosby.binary.Osmformat;
 import lombok.extern.slf4j.Slf4j;
-
+import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -74,11 +74,23 @@ public final class OSMWriter implements Runnable {
 
 
     /**
+     * OSMWriter constructor.
+     *
+     * @param output Shared BlobWriter
+     * @param queue  input queue with entities.
+     */
+    public OSMWriter(final BlobWriter output, final LinkedBlockingQueue<OsmEntity> queue) {
+        this.writer = output;
+        this.writeQueue = queue;
+        encodersReset();
+    }
+
+    /**
      * Writes contents of encoders to the writer
      * and resets encoders.
      *
-     * @param nodesSize Estimated size of nodes group.
-     * @param waysSize Estimated size of ways group.
+     * @param nodesSize    Estimated size of nodes group.
+     * @param waysSize     Estimated size of ways group.
      * @param relationSize Estimated size of relations group.
      */
     private void flush(final int nodesSize, final int waysSize, final int relationSize) {
@@ -119,71 +131,68 @@ public final class OSMWriter implements Runnable {
         this.relationEncoder = new RelationEncoder(this.stringEncoder);
     }
 
-    /**
-     * OSMWriter constructor.
-     *
-     * @param output Shared BlobWriter
-     * @param queue  input queue with entities.
-     */
-    public OSMWriter(final BlobWriter output, final LinkedBlockingQueue<OsmEntity> queue) {
-        this.writer = output;
-        this.writeQueue = queue;
-        encodersReset();
-    }
-
     @Override
     public void run() {
         Thread.currentThread().setName("OSMWriter");
         while (true) {
             try {
                 OsmEntity entity = writeQueue.take();
-                if (entity instanceof Node) {
-                    long startTime = System.nanoTime();
-                    nodesEncoder.add((Node) entity);
-                    long endTime = System.nanoTime();
-                    encodingNodes += endTime - startTime;
-                    totalNodes++;
-                } else if (entity instanceof Way) {
-                    long startTime = System.nanoTime();
-                    wayEncoder.add((Way) entity);
-                    long endTime = System.nanoTime();
-                    encodingWays += endTime - startTime;
-                    totalWays++;
-                } else if (entity instanceof Relation) {
-                    long startTime = System.nanoTime();
-                    relationEncoder.add((Relation) entity);
-                    long endTime = System.nanoTime();
-                    encodingRelations += endTime - startTime;
-                    totalRelations++;
-                } else {
-                    log.error("Unknown entity type: {}", entity);
-                }
-
-                long estimateStart = System.currentTimeMillis();
-                int nodesSize = nodesEncoder.estimateSize();
-                int waysSize = wayEncoder.estimateSize();
-                int relationSize = relationEncoder.estimateSize();
-                long estimateEnd = System.currentTimeMillis();
-
-                totalEstimate += estimateEnd - estimateStart;
-                int blobSize = nodesSize + waysSize + relationSize + stringEncoder.getStringSize();
-                if (blobSize > LIMIT_BLOB_SIZE) {
-                    flush(nodesSize, waysSize, relationSize);
-                }
+                process(entity);
             } catch (InterruptedException e) {
+                // Thread is getting ready to die, but first,
+                // drain remaining elements on the queue and process them.
+                final LinkedList<OsmEntity> remainingObjects = new LinkedList<>();
+                writeQueue.drainTo(remainingObjects);
+                for (OsmEntity entity : remainingObjects) {
+                    process(entity);
+                }
                 flush(nodesEncoder.estimateSize(), wayEncoder.estimateSize(), relationEncoder.estimateSize());
+
                 log.debug("OSMWriter requested to stop");
-
-                log.info("Time spend encoding nodes {} seconds ", encodingNodes/1000000000);
-                log.info("Time spend encoding ways {} seconds ", encodingWays/1000000000);
-                log.info("Time spend encoding relations {} seconds ", encodingRelations/1000000000);
-
+                log.info("Time spend encoding nodes {} seconds ", encodingNodes / 1000000000);
+                log.info("Time spend encoding ways {} seconds ", encodingWays / 1000000000);
+                log.info("Time spend encoding relations {} seconds ", encodingRelations / 1000000000);
                 log.info("Total time spent estimating the size in ms {} ", totalEstimate);
                 log.info("Total time spent in flush calls in ms {} ", totalFlushTime);
-
                 log.info("Nodes processed {}, ways processed {}, relations processed {}", totalNodes, totalWays, totalRelations);
                 return;
             }
+        }
+    }
+
+    private void process(final OsmEntity entity) {
+        if (entity instanceof Node) {
+            long startTime = System.nanoTime();
+            nodesEncoder.add((Node) entity);
+            long endTime = System.nanoTime();
+            encodingNodes += endTime - startTime;
+            totalNodes++;
+        } else if (entity instanceof Way) {
+            long startTime = System.nanoTime();
+            wayEncoder.add((Way) entity);
+            long endTime = System.nanoTime();
+            encodingWays += endTime - startTime;
+            totalWays++;
+        } else if (entity instanceof Relation) {
+            long startTime = System.nanoTime();
+            relationEncoder.add((Relation) entity);
+            long endTime = System.nanoTime();
+            encodingRelations += endTime - startTime;
+            totalRelations++;
+        } else {
+            log.error("Unknown entity type: {}", entity);
+        }
+
+        long estimateStart = System.currentTimeMillis();
+        int nodesSize = nodesEncoder.estimateSize();
+        int waysSize = wayEncoder.estimateSize();
+        int relationSize = relationEncoder.estimateSize();
+        long estimateEnd = System.currentTimeMillis();
+
+        totalEstimate += estimateEnd - estimateStart;
+        int blobSize = nodesSize + waysSize + relationSize + stringEncoder.getStringSize();
+        if (blobSize > LIMIT_BLOB_SIZE) {
+            flush(nodesSize, waysSize, relationSize);
         }
     }
 }
