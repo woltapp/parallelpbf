@@ -21,7 +21,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class ParallelBinaryWriter implements Closeable {
 
     /**
-     * Capacity of Queue
+     * Capacity of Queue.
      */
     public static final int QUEUE_CAPACITY = 1000000;
 

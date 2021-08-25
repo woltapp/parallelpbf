@@ -15,6 +15,7 @@ import crosby.binary.Osmformat;
 import lombok.extern.slf4j.Slf4j;
 import java.util.LinkedList;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Main handler for the OSM entities. Accepts entities over
@@ -61,15 +62,39 @@ public final class OSMWriter implements Runnable {
      */
     private StringTableEncoder stringEncoder;
 
+    /**
+     * Time spent to write Nodes in nanoseconds.
+     */
     private Long encodingNodes = 0L;
+
+    /**
+     * Time spent to write Ways in nanoseconds.
+     */
     private Long encodingWays = 0L;
+
+    /**
+     * Time spent to write Relations in nanoseconds.
+     */
     private Long encodingRelations = 0L;
 
+    /**
+     * Total number of Nodes written.
+     */
     private Long totalNodes = 0L;
+
+    /**
+     * Total number of Ways written.
+     */
     private Long totalWays = 0L;
+
+    /**
+     * Total number of Relations written.
+     */
     private Long totalRelations = 0L;
 
-    private Long totalEstimate = 0L;
+    /**
+     * Time to write buffered elements to disk in nanoseconds.
+     */
     private Long totalFlushTime = 0L;
 
 
@@ -131,6 +156,7 @@ public final class OSMWriter implements Runnable {
         this.relationEncoder = new RelationEncoder(this.stringEncoder);
     }
 
+    @SuppressWarnings("java:S2189")
     @Override
     public void run() {
         Thread.currentThread().setName("OSMWriter");
@@ -147,49 +173,52 @@ public final class OSMWriter implements Runnable {
                     process(entity);
                 }
                 flush(nodesEncoder.estimateSize(), wayEncoder.estimateSize(), relationEncoder.estimateSize());
-
-                log.debug("OSMWriter requested to stop");
-                log.info("Time spend encoding nodes {} seconds ", encodingNodes / 1000000000);
-                log.info("Time spend encoding ways {} seconds ", encodingWays / 1000000000);
-                log.info("Time spend encoding relations {} seconds ", encodingRelations / 1000000000);
-                log.info("Total time spent estimating the size in ms {} ", totalEstimate);
-                log.info("Total time spent in flush calls in ms {} ", totalFlushTime);
-                log.info("Nodes processed {}, ways processed {}, relations processed {}", totalNodes, totalWays, totalRelations);
+                if (log.isDebugEnabled()) {
+                    log.debug("OSMWriter requested to stop");
+                    log.debug("Time spend encoding nodes {} seconds.", TimeUnit.NANOSECONDS.toSeconds(encodingNodes));
+                    log.debug("Time spend encoding ways {} seconds.", TimeUnit.NANOSECONDS.toSeconds(encodingWays));
+                    log.debug("Time spend encoding relations {} seconds.",
+                        TimeUnit.NANOSECONDS.toSeconds(encodingRelations));
+                    log.debug("Total time spent in flush calls in ms {}.", totalFlushTime);
+                    log.debug("Nodes processed {}, ways processed {}, relations processed {}", totalNodes, totalWays,
+                        totalRelations);
+                }
                 return;
             }
         }
     }
 
+    /**
+     * Converts given {@link OsmEntity} to protobuf element and flushes queue to disk if necessary.
+     * @param entity a Node, Way or Relation to be persisted.
+     */
     private void process(final OsmEntity entity) {
         if (entity instanceof Node) {
             long startTime = System.nanoTime();
             nodesEncoder.add((Node) entity);
             long endTime = System.nanoTime();
             encodingNodes += endTime - startTime;
-            totalNodes++;
+            totalNodes += 1;
         } else if (entity instanceof Way) {
             long startTime = System.nanoTime();
             wayEncoder.add((Way) entity);
             long endTime = System.nanoTime();
             encodingWays += endTime - startTime;
-            totalWays++;
+            totalWays += 1;
         } else if (entity instanceof Relation) {
             long startTime = System.nanoTime();
             relationEncoder.add((Relation) entity);
             long endTime = System.nanoTime();
             encodingRelations += endTime - startTime;
-            totalRelations++;
+            totalRelations += 1;
         } else {
             log.error("Unknown entity type: {}", entity);
         }
 
-        long estimateStart = System.currentTimeMillis();
         int nodesSize = nodesEncoder.estimateSize();
         int waysSize = wayEncoder.estimateSize();
         int relationSize = relationEncoder.estimateSize();
-        long estimateEnd = System.currentTimeMillis();
 
-        totalEstimate += estimateEnd - estimateStart;
         int blobSize = nodesSize + waysSize + relationSize + stringEncoder.getStringSize();
         if (blobSize > LIMIT_BLOB_SIZE) {
             flush(nodesSize, waysSize, relationSize);
