@@ -1,6 +1,5 @@
 package com.wolt.osm.parallelpbf.encoder;
 
-import com.wolt.osm.parallelpbf.entity.Info;
 import com.wolt.osm.parallelpbf.entity.Relation;
 import com.wolt.osm.parallelpbf.entity.RelationMember;
 import crosby.binary.Osmformat;
