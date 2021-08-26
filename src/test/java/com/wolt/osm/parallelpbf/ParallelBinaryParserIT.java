@@ -105,6 +105,12 @@ class ParallelBinaryParserIT {
         assertEquals("Oaktree Close", taggedNode.getTags().get("name"));
         assertTrue(taggedNode.getTags().containsKey("highway"));
         assertEquals("bus_stop", taggedNode.getTags().get("highway"));
+
+        assertEquals("NaPTAN", taggedNode.getInfo().getUsername());
+        assertEquals(1, taggedNode.getInfo().getVersion());
+        assertEquals(2539009, taggedNode.getInfo().getChangeset());
+        assertEquals(104459, taggedNode.getInfo().getUid());
+        assertEquals(1253397762000L, taggedNode.getInfo().getTimestamp());
     }
 
     private void testWay() {
