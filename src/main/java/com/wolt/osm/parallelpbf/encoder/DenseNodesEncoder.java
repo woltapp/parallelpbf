@@ -2,6 +2,7 @@ package com.wolt.osm.parallelpbf.encoder;
 
 import com.wolt.osm.parallelpbf.entity.Node;
 import crosby.binary.Osmformat;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Encodes for DenseNodes structure. Keeps data for the next blob
@@ -38,6 +39,26 @@ public final class DenseNodesEncoder extends OsmEntityEncoder<Node> {
     private long lon = 0;
 
     /**
+     * Current value of UserStringId for delta coding.
+     */
+    private int infoUserSid = 0;
+
+    /**
+     * Current value of Changeset for delta coding.
+     */
+    private long infoChangeset = 0L;
+
+    /**
+     * Current value of Uid for delta coding.
+     */
+    private int  infoUid = 0;
+
+    /**
+     * Current value of Timestamp for delta coding.
+     */
+    private long infoTimestamp = 0L;
+
+    /**
      * DensNodes blob.
      */
     private Osmformat.DenseNodes.Builder nodes = Osmformat.DenseNodes.newBuilder();
@@ -66,6 +87,19 @@ public final class DenseNodesEncoder extends OsmEntityEncoder<Node> {
 
         nodes.addId(node.getId() - id);
         id = node.getId();
+
+        if (node.getInfo() != null) {
+            int newUserSid = stringEncoder.getStringIndex(node.getInfo().getUsername());
+            nodes.getDenseinfoBuilder().addVersion(node.getInfo().getVersion())
+                .addChangeset(node.getInfo().getChangeset() - infoChangeset).addUid(node.getInfo().getUid() - infoUid)
+                .addUserSid(newUserSid - infoUserSid)
+                .addTimestamp(TimeUnit.MICROSECONDS.toMillis(node.getInfo().getTimestamp() - infoTimestamp))
+                .addVisible(node.getInfo().isVisible());
+            infoChangeset = node.getInfo().getChangeset();
+            infoUid = node.getInfo().getUid();
+            infoTimestamp = node.getInfo().getTimestamp();
+            infoUserSid = newUserSid;
+        }
 
         long latMillis = doubleToNanoScaled(node.getLat() / GRANULARITY);
         long lonMillis = doubleToNanoScaled(node.getLon() / GRANULARITY);
