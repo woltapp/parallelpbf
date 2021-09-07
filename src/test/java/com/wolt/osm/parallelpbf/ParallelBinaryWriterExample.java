@@ -28,7 +28,7 @@ public class ParallelBinaryWriterExample {
         writer.close();
     }
 
-    private void execute() throws IOException {
+    private void execute() throws Exception {
         Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         root.setLevel(Level.TRACE);
 
@@ -53,6 +53,6 @@ public class ParallelBinaryWriterExample {
         output.close();
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         new ParallelBinaryWriterExample().execute();
     }}

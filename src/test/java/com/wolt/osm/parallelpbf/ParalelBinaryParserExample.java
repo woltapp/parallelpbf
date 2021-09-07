@@ -28,10 +28,10 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ParalelBinaryParserExample {
 
     private final StringBuilder output = new StringBuilder();
-    private AtomicLong nodesCounter = new AtomicLong();
-    private AtomicLong waysCounter = new AtomicLong();
-    private AtomicLong relationsCounter = new AtomicLong();
-    private AtomicLong changesetsCounter = new AtomicLong();
+    private final AtomicLong nodesCounter = new AtomicLong();
+    private final AtomicLong waysCounter = new AtomicLong();
+    private final AtomicLong relationsCounter = new AtomicLong();
+    private final AtomicLong changesetsCounter = new AtomicLong();
 
     private void processHeader(Header header) {
         synchronized (output) {
@@ -84,7 +84,7 @@ public class ParalelBinaryParserExample {
         System.out.println(output);
     }
 
-    private void execute() {
+    private void execute() throws Exception {
         Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         root.setLevel(Level.TRACE);
 
@@ -100,7 +100,7 @@ public class ParalelBinaryParserExample {
                 .parse();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         new ParalelBinaryParserExample().execute();
     }
 }

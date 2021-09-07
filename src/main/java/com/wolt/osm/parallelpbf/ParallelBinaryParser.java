@@ -17,26 +17,33 @@
 
 package com.wolt.osm.parallelpbf;
 
-import com.wolt.osm.parallelpbf.blob.BlobInformation;
-import com.wolt.osm.parallelpbf.blob.BlobReader;
-import com.wolt.osm.parallelpbf.io.OSMDataReader;
-import com.wolt.osm.parallelpbf.io.OSMHeaderReader;
-import com.wolt.osm.parallelpbf.io.OSMReader;
-import com.wolt.osm.parallelpbf.entity.Relation;
-import com.wolt.osm.parallelpbf.entity.Node;
-import com.wolt.osm.parallelpbf.entity.Way;
-import com.wolt.osm.parallelpbf.entity.Header;
-import com.wolt.osm.parallelpbf.entity.BoundBox;
-import lombok.extern.slf4j.Slf4j;
-import lombok.var;
-
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
+
+import com.wolt.osm.parallelpbf.blob.BlobInformation;
+import com.wolt.osm.parallelpbf.blob.BlobReader;
+import com.wolt.osm.parallelpbf.entity.BoundBox;
+import com.wolt.osm.parallelpbf.entity.Header;
+import com.wolt.osm.parallelpbf.entity.Node;
+import com.wolt.osm.parallelpbf.entity.Relation;
+import com.wolt.osm.parallelpbf.entity.Way;
+import com.wolt.osm.parallelpbf.io.OSMDataReader;
+import com.wolt.osm.parallelpbf.io.OSMHeaderReader;
+import com.wolt.osm.parallelpbf.io.OSMReader;
+
+import lombok.extern.slf4j.Slf4j;
+import lombok.var;
 
 /**
  * Parallel OSM PBF format parser.
@@ -129,7 +136,7 @@ public final class ParallelBinaryParser {
      * Where there will be no tasks left to submit, every remaining task will be awaited to complete.
      * After that executor (see above) will be destroyed and onComplete callback will be called.
      */
-    private List<Future<?>> tasksInFlight = new LinkedList<>();
+    private final List<Future<?>> tasksInFlight = new LinkedList<>();
 
     /**
      * Data block counter for partitioning, starts with zero, so first data block (which is OsmHeader block)
@@ -344,8 +351,10 @@ public final class ParallelBinaryParser {
      *
      * There is no non-blocking version of that method, but you can safely run it in a separate runnable
      * for that purpose.
+     *
+     * @throws ExecutionException on processing error.
      */
-    public void parse() {
+    public void parse() throws ExecutionException {
         if (!tasksInFlight.isEmpty()) {
             throw new IllegalStateException("Previous parse call is still in progress");
         }
@@ -354,17 +363,23 @@ public final class ParallelBinaryParser {
         currentDataBlock = 0;
         headerSeen = false;
 
-        Optional<? extends Future<?>> blob;
-        do {
-            blob = reader.readBlobHeaderLength().flatMap(reader::readBlobHeader).flatMap(this::processDataBlob);
-            blob.ifPresent(tasksInFlight::add);
-
-            //We should remove completed tasks from time to time to not to increase our memory consumption
-            tasksInFlight = tasksInFlight.stream().filter(f -> !f.isDone()).collect(Collectors.toList());
-        } while (blob.isPresent());
-
-        //Wait for tasks completion
         try {
+            Optional<? extends Future<?>> blob;
+            do {
+                blob = reader.readBlobHeaderLength().flatMap(reader::readBlobHeader).flatMap(this::processDataBlob);
+                blob.ifPresent(tasksInFlight::add);
+
+                //We should remove completed tasks from time to time to not to increase our memory consumption
+                Iterator<Future<?>> it = tasksInFlight.iterator();
+                while (it.hasNext()) {
+                    Future<?> f = it.next();
+                    if (isDoneSuccessfully(f)) {
+                        it.remove(); // O(1) for LinkedList
+                    }
+                }
+            } while (blob.isPresent());
+
+            //Wait for tasks completion
             for (Future<?> future : tasksInFlight) {
                 future.get();
             }
@@ -372,7 +387,7 @@ public final class ParallelBinaryParser {
             Thread.currentThread().interrupt();
         } catch (ExecutionException e) {
             log.error("Parsing failed with: {}", e.getMessage(), e);
-            return;
+            throw e;
         } finally {
             //In case of exception we would like to kill all the tasks immediately
             tasksInFlight.stream().filter(t -> !t.isDone()).forEach(t -> t.cancel(true));
@@ -384,5 +399,20 @@ public final class ParallelBinaryParser {
         if (completeCb != null) {
             completeCb.run();
         }
+    }
+
+    /**
+     * @param f the Future to be checked.
+     * @return if the given Future executed successfully (not failed nor cancelled).
+     * @throws ExecutionException if the Future failed.
+     * @throws InterruptedException if the current thread is interrupted while waiting.
+     */
+    private boolean isDoneSuccessfully(final Future<?> f)  throws ExecutionException, InterruptedException {
+        boolean done = f.isDone();
+        if (done) {
+            // In case of calculation error or cancellation this call will throw an Exception:
+            f.get();
+        }
+        return done;
     }
 }

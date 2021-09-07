@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -83,7 +84,7 @@ class ParallelBinaryParserIT {
     }
 
     /* Shared code */
-    private void parse(InputStream input) {
+    private void parse(InputStream input) throws ExecutionException {
         new ParallelBinaryParser(input, 1)
                 .onNode(nodeChecker)
                 .onWay(wayChecker)
@@ -125,7 +126,7 @@ class ParallelBinaryParserIT {
     }
 
     @Test
-    void testParser() {
+    void testParser() throws ExecutionException {
         InputStream input = Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream("sample.pbf");
         parse(input);
@@ -165,7 +166,7 @@ class ParallelBinaryParserIT {
     }
 
     @Test
-    void testWriter() throws IOException {
+    void testWriter() throws Exception {
         String outputFilename = System.getProperty("java.io.tmpdir")+"/parallel.pbf";
         File outputFile = new File(outputFilename);
         if (outputFile.exists()) {
