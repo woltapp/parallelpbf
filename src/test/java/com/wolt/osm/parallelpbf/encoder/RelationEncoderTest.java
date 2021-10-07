@@ -48,5 +48,12 @@ class RelationEncoderTest {
         assertEquals(2, r.getMemids(0));
         assertEquals(1, r.getMemids(1));
         assertEquals(3, r.getMemids(2));
+
+        assertEquals(3, r.getInfo().getVersion());
+        assertEquals(1, r.getInfo().getUid());
+        assertEquals(5, r.getInfo().getChangeset());
+
+
+
     }
 }

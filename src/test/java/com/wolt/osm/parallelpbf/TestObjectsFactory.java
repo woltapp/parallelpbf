@@ -91,6 +91,7 @@ public class TestObjectsFactory {
         way.getNodes().add(3L);
         way.getNodes().add(6L);
         way.getNodes().add(2L);
+        way.setInfo(info);
         return way;
     }
 
@@ -103,6 +104,7 @@ public class TestObjectsFactory {
         relation.getMembers().add(member1);
         relation.getMembers().add(member2);
         relation.getMembers().add(member3);
+        relation.setInfo(info);
         return relation;
     }
 }

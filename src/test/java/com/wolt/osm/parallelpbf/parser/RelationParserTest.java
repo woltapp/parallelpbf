@@ -26,8 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class RelationParserTest {
     private final Consumer<Relation> checker = (relation) -> {
@@ -42,6 +41,8 @@ class RelationParserTest {
         assertEquals(9000, actualMember.getId().longValue());
         Assertions.assertEquals(RelationMember.Type.NODE, actualMember.getType());
         assertEquals("fail", actualMember.getRole());
+        assertNotNull(relation.getInfo());
+        assertEquals("test", relation.getInfo().getUsername());
     };
 
     @Test
