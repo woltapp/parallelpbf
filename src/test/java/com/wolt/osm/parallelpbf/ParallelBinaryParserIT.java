@@ -166,8 +166,8 @@ class ParallelBinaryParserIT {
     }
 
     @Test
-    void testWriter() throws Exception {
-        String outputFilename = System.getProperty("java.io.tmpdir") + "/parallel.pbf";
+    void testWriter() throws IOException {
+        String outputFilename = System.getProperty("java.io.tmpdir")+"/parallel.pbf";
         File outputFile = new File(outputFilename);
         if (outputFile.exists()) {
             outputFile.delete();
