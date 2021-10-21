@@ -84,7 +84,7 @@ public class ParalelBinaryParserExample {
         System.out.println(output);
     }
 
-    private void execute() throws Exception {
+    private void execute() {
         Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         root.setLevel(Level.TRACE);
 

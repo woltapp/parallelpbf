@@ -352,9 +352,9 @@ public final class ParallelBinaryParser {
      * There is no non-blocking version of that method, but you can safely run it in a separate runnable
      * for that purpose.
      *
-     * @throws ExecutionException on processing error.
+     * @throws RuntimeException on processing error.
      */
-    public void parse() throws ExecutionException {
+    public void parse() {
         if (!tasksInFlight.isEmpty()) {
             throw new IllegalStateException("Previous parse call is still in progress");
         }
@@ -387,7 +387,7 @@ public final class ParallelBinaryParser {
             Thread.currentThread().interrupt();
         } catch (ExecutionException e) {
             log.error("Parsing failed with: {}", e.getMessage(), e);
-            throw e;
+            throw new RuntimeException(e);
         } finally {
             //In case of exception we would like to kill all the tasks immediately
             tasksInFlight.stream().filter(t -> !t.isDone()).forEach(t -> t.cancel(true));
