@@ -117,12 +117,13 @@ public abstract class BaseParser<M, T extends Consumer<?>> {
     private Info convertInfo(final Osmformat.Info infoMessage) {
         if (infoMessage != null) {
             String username = stringTable.getS(infoMessage.getUserSid()).toStringUtf8();
+            boolean isVisible = !infoMessage.hasVisible() || infoMessage.getVisible();
             return new Info(infoMessage.getUid(),
                     username,
                     infoMessage.getVersion(),
                     infoMessage.getTimestamp(),
                     infoMessage.getChangeset(),
-                    infoMessage.getVisible());
+                    isVisible);
         }
         return null;
     }

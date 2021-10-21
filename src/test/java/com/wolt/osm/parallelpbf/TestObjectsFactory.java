@@ -25,6 +25,9 @@ public class TestObjectsFactory {
     public static final Info info = new Info(1, "test", 3, 4, 5, true);
 
     public static final Osmformat.Info infoMessage = Osmformat.Info.newBuilder().setUid(1).setUserSid(2).setVersion(3).setTimestamp(4).setChangeset(5).setVisible(true).build();
+    public static final Osmformat.Info infoMessageWithNullVisibleFlag = Osmformat.Info.newBuilder()
+             .setUid(1).setUserSid(2).setVersion(3).setTimestamp(4).setChangeset(5).build();
+
     public static final Osmformat.StringTable stringTable = Osmformat.StringTable.newBuilder()
             .addS(ByteString.copyFromUtf8(""))
             .addS(ByteString.copyFromUtf8("fail"))
@@ -62,6 +65,14 @@ public class TestObjectsFactory {
             .addKeys(3)
             .addVals(4)
             .setInfo(TestObjectsFactory.infoMessage)
+            .addRefs(9000)
+            .build();
+
+    public static final Osmformat.Way wayMessageWithNullVisibleFlag = Osmformat.Way.newBuilder()
+            .setId(1)
+            .addKeys(3)
+            .addVals(4)
+            .setInfo(TestObjectsFactory.infoMessageWithNullVisibleFlag)
             .addRefs(9000)
             .build();
 
