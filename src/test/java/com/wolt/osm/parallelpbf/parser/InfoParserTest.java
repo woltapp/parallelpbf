@@ -94,6 +94,19 @@ class InfoParserTest {
     }
 
     @Test
+    void testWayInfoWithNullVisibleFlag() {
+        var way = Osmformat.Way.newBuilder()
+                .setId(1)
+                .setInfo(TestObjectsFactory.infoMessageWithNullVisibleFlag)
+                .build();
+
+        var testedObject = new InfoParser(null, TestObjectsFactory.stringTable);
+
+        var actual = testedObject.parseInfo(way);
+        Assertions.assertEquals(TestObjectsFactory.info, actual);
+    }
+
+    @Test
     void testRelationInfoMissing() {
         var relation = Osmformat.Relation.newBuilder()
                 .setId(1)
