@@ -19,6 +19,12 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 @Slf4j
 public class ParallelBinaryWriter implements Closeable {
+
+    /**
+     * Capacity of Queue.
+     */
+    public static final int QUEUE_CAPACITY = 1000000;
+
     /**
      * Number of threads to use.
      */
@@ -60,7 +66,7 @@ public class ParallelBinaryWriter implements Closeable {
     public ParallelBinaryWriter(final OutputStream outputStream, final int noThreads, final BoundBox boundBox) {
         this.writer = new BlobWriter(outputStream);
         this.threads = noThreads;
-        writeQueue = new LinkedBlockingQueue<>(noThreads);
+        writeQueue = new LinkedBlockingQueue<>(QUEUE_CAPACITY);
         if (!writeHeader(boundBox)) {
             throw new RuntimeException("Error while creating writer and writing header");
         }
