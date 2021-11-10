@@ -161,7 +161,7 @@ class ParallelBinaryParserIT {
         assertEquals(1, taggedWay.getInfo().getVersion());
         assertEquals(1334007464L, taggedWay.getInfo().getTimestamp());
         assertEquals(11245909, taggedWay.getInfo().getChangeset());
-        assertFalse(taggedWay.getInfo().isVisible());
+        assertTrue(taggedWay.getInfo().isVisible());
 
         testRelation();
         assertEquals(24119, taggedRelation.getInfo().getUid());
@@ -169,7 +169,7 @@ class ParallelBinaryParserIT {
         assertEquals(81, taggedRelation.getInfo().getVersion());
         assertEquals(1337419064L, taggedRelation.getInfo().getTimestamp());
         assertEquals(11640673, taggedRelation.getInfo().getChangeset());
-        assertFalse(taggedRelation.getInfo().isVisible());
+        assertTrue(taggedRelation.getInfo().isVisible());
     }
 
     @Test
