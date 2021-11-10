@@ -28,10 +28,10 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ParalelBinaryParserExample {
 
     private final StringBuilder output = new StringBuilder();
-    private AtomicLong nodesCounter = new AtomicLong();
-    private AtomicLong waysCounter = new AtomicLong();
-    private AtomicLong relationsCounter = new AtomicLong();
-    private AtomicLong changesetsCounter = new AtomicLong();
+    private final AtomicLong nodesCounter = new AtomicLong();
+    private final AtomicLong waysCounter = new AtomicLong();
+    private final AtomicLong relationsCounter = new AtomicLong();
+    private final AtomicLong changesetsCounter = new AtomicLong();
 
     private void processHeader(Header header) {
         synchronized (output) {

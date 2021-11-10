@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -200,6 +201,55 @@ class ParallelBinaryParserIT {
         testTaggedNode();
         testWay();
         testParser();
+    }
+
+    @Test
+    void testExceptionProcessing() {
+        final AtomicInteger completedCount = new AtomicInteger();
+
+        final AtomicInteger nodeCount = new AtomicInteger();
+        assertThrows(RuntimeException.class, () -> {
+            try (InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream("sample.pbf")) {
+                new ParallelBinaryParser(input, 5).onComplete(completedCount::incrementAndGet).onNode((Node node) -> {
+                    nodeCount.incrementAndGet();
+                    if (nodeCount.get() > 5) {
+                        throw new RuntimeException("Problem processing node!");
+                    }
+                }).onWay(way -> {
+                }).onRelation(relation -> {
+                }).parse();
+            }
+        });
+
+        final AtomicInteger wayCount = new AtomicInteger();
+        assertThrows(RuntimeException.class, () -> {
+            try (InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream("sample.pbf")) {
+                new ParallelBinaryParser(input, 5).onComplete(completedCount::incrementAndGet).onNode(node -> {
+                }).onWay(way -> {
+                    wayCount.incrementAndGet();
+                    if (wayCount.get() > 5) {
+                        throw new RuntimeException("Problem processing way!");
+                    }
+                }).onRelation(relation -> {
+                }).parse();
+            }
+        });
+
+        final AtomicInteger relationCount = new AtomicInteger();
+        assertThrows(RuntimeException.class, () -> {
+            try (InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream("sample.pbf")) {
+                new ParallelBinaryParser(input, 5).onComplete(completedCount::incrementAndGet).onNode(node -> {
+                }).onWay(way -> {
+                }).onRelation(relation -> {
+                    relationCount.incrementAndGet();
+                    if (relationCount.get() > 2) {
+                        throw new RuntimeException("Problem processing relation!");
+                    }
+                }).parse();
+            }
+        });
+
+        assertEquals(0, completedCount.get());
     }
 
 }
