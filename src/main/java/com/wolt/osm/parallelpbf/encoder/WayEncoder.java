@@ -6,7 +6,7 @@ import crosby.binary.Osmformat;
 /**
  * Encodes for Way structure. Keeps data for the next blob
  * production in RAM and form byte[] blob in request.
- *
+ * <p>
  * Encoder is stateful and can't be used after 'write' call is issued.
  * Encoder is not thread-safe.
  */
@@ -26,7 +26,7 @@ public final class WayEncoder extends OsmEntityEncoder<Way> {
     /**
      * Ways builder.
      */
-    private Osmformat.PrimitiveGroup.Builder ways = Osmformat.PrimitiveGroup.newBuilder();
+    private final Osmformat.PrimitiveGroup.Builder ways = Osmformat.PrimitiveGroup.newBuilder();
 
     /**
      * Block-wide string table encoder.
@@ -60,12 +60,12 @@ public final class WayEncoder extends OsmEntityEncoder<Way> {
 
         Osmformat.Info info =
                 w.getInfo() != null ? Osmformat.Info.getDefaultInstance().toBuilder()
-                .setChangeset(w.getInfo().getChangeset())
-                .setTimestamp(w.getInfo().getTimestamp())
-                .setUid(w.getInfo().getUid())
-                .setUserSid(stringEncoder.getStringIndex(w.getInfo().getUsername()))
-                .setVersion(w.getInfo().getVersion())
-                .setVisible(w.getInfo().isVisible())
+                .setChangeset(w.getInfo().changeset())
+                .setTimestamp(w.getInfo().timestamp())
+                .setUid(w.getInfo().uid())
+                .setUserSid(stringEncoder.getStringIndex(w.getInfo().username()))
+                .setVersion(w.getInfo().version())
+                .setVisible(w.getInfo().visible())
                 .build() : Osmformat.Info.getDefaultInstance();
         way.setInfo(info);
 

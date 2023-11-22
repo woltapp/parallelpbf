@@ -43,12 +43,11 @@ import com.wolt.osm.parallelpbf.io.OSMHeaderReader;
 import com.wolt.osm.parallelpbf.io.OSMReader;
 
 import lombok.extern.slf4j.Slf4j;
-import lombok.var;
 
 /**
  * Parallel OSM PBF format parser.
- *
- * See https://github.com/woltapp/parallelpbf for the details and usage example.
+ * <p>
+ * See <a href="https://github.com/woltapp/parallelpbf">...</a> for the details and usage example.
  */
 @Slf4j
 public final class ParallelBinaryParser {
@@ -95,7 +94,7 @@ public final class ParallelBinaryParser {
 
     /**
      * Two parameters below are used to support sharding and partial file reading.
-     *
+     * <p>
      * The first one, partitions, tells the reader how many partitions exists in total.
      */
     private final int partitions;
@@ -112,7 +111,7 @@ public final class ParallelBinaryParser {
      * A submitted task limiter. While executor can limit number of running tasks to the number of running threads,
      * we do not want to submit too many tasks, as each task consumes some RAM for the blob data and OSM PBF can be
      * tens of gigabytes, so clearly will not fit to the RAM.
-     *
+     * <p>
      * To achieve that we set the limit of the task limiter semaphore to the number of thread and each submitted task
      * increases semaphore value. At the same time, on completion each task decreases semaphore value. As submission
      * is a synchronous process and executed in the same thread, that reads blobs from the stream,
@@ -132,7 +131,7 @@ public final class ParallelBinaryParser {
     /**
      * Number of currently running tasks. Each tasks is added to that list
      * after submission and list is cleared of complete tasks during submission of the following tasks.
-     *
+     * <p>
      * Where there will be no tasks left to submit, every remaining task will be awaited to complete.
      * After that executor (see above) will be destroyed and onComplete callback will be called.
      */
@@ -155,19 +154,20 @@ public final class ParallelBinaryParser {
      * @return OSMReader instance, that knows how to work with that blob or empty if blob data is not supported.
      */
     private Optional<OSMReader> makeReaderForBlob(final byte[] blob, final BlobInformation information) {
-        switch (information.getType()) {
-            case BlobInformation.TYPE_OSM_DATA:
+        return switch (information.type()) {
+            case BlobInformation.TYPE_OSM_DATA -> {
                 if (!headerSeen) {
                     log.error("Got OSMData before OSMHeader");
-                    return Optional.empty();
+                    yield Optional.empty();
                 }
-                return Optional.of(new OSMDataReader(blob, tasksLimiter, nodesCb, waysCb, relationsCb, changesetsCb));
-            case BlobInformation.TYPE_OSM_HEADER:
+                yield Optional.of(new OSMDataReader(blob, tasksLimiter, nodesCb, waysCb, relationsCb, changesetsCb));
+            }
+            case BlobInformation.TYPE_OSM_HEADER -> {
                 headerSeen = true;
-                return Optional.of(new OSMHeaderReader(blob, tasksLimiter, headerCb, boundBoxCb));
-            default:
-                return Optional.empty();
-        }
+                yield Optional.of(new OSMHeaderReader(blob, tasksLimiter, headerCb, boundBoxCb));
+            }
+            default -> Optional.empty();
+        };
     }
 
     /**
@@ -208,12 +208,12 @@ public final class ParallelBinaryParser {
             int currentShard = currentDataBlock % partitions;
             log.trace("Current shard: {}, current block: {}, my shard: {}", currentShard, currentDataBlock, shard);
             ++currentDataBlock;
-            if (currentShard == shard || information.getType().equals("OSMHeader")) {
-                return reader.readBlob(information.getSize())
+            if (currentShard == shard || information.type().equals("OSMHeader")) {
+                return reader.readBlob(information.size())
                         .flatMap(value -> makeReaderForBlob(value, information))
                         .flatMap(this::runReaderAsync);
             } else {
-                var skipped = reader.skip(information.getSize());
+                var skipped = reader.skip(information.size());
                 return skipped.map(CompletableFuture::completedFuture);
             }
         } else {
@@ -340,15 +340,15 @@ public final class ParallelBinaryParser {
 
     /**
      * Parses the OSM PBF file. This call will block until parsing is complete.
-     *
+     * <p>
      * During parsing procedure OSM PBF file will be read blob by blob into memory and
      * parsed in parallel using configured number of threads. During parse callbacks will be called.
      * Due to parallel nature of the parser those callback can be called simultaneously, so they must
      * be thread safe and reeenterable.
-     *
+     * <p>
      * In case of successful completion onComplete callback will be called and it is guaranteed, that
      * all previous callback call will be finished earlier and they will not be called after onComplete.
-     *
+     * <p>
      * There is no non-blocking version of that method, but you can safely run it in a separate runnable
      * for that purpose.
      *

@@ -61,9 +61,9 @@ public final class OSMHeaderReader extends OSMReader {
      *                     Bounding box parsing will be skipped completely if set to null
      */
     public OSMHeaderReader(final byte[] blob,
-                    final Semaphore tasksLimiter,
-                    final Consumer<Header> onHeader,
-                    final Consumer<BoundBox> onBoundBox) {
+                           final Semaphore tasksLimiter,
+                           final Consumer<Header> onHeader,
+                           final Consumer<BoundBox> onBoundBox) {
         super(blob, tasksLimiter);
         this.headerCb = onHeader;
         this.boundBoxCb = onBoundBox;
@@ -82,7 +82,7 @@ public final class OSMHeaderReader extends OSMReader {
                 .filter(f -> !f.equalsIgnoreCase(Header.FEATURE_HISTORICAL_INFORMATION))
                 .findAny();
         unsupported.ifPresent(s -> log.error("Unsupported required feature found: {}", s));
-        return !unsupported.isPresent();
+        return unsupported.isEmpty();
     }
 
     /**
@@ -108,14 +108,10 @@ public final class OSMHeaderReader extends OSMReader {
         }
 
         if (headerCb != null) {
-            Header header = new Header(headerData.getRequiredFeaturesList(), headerData.getOptionalFeaturesList());
-            if (headerData.hasWritingprogram()) {
-                header.setWritingProgram(headerData.getWritingprogram());
-            }
-            if (headerData.hasSource()) {
-                header.setSource(headerData.getSource());
-            }
-            log.debug("Header: {}", header.toString());
+
+            Header header = new Header(headerData.getRequiredFeaturesList(), headerData.getOptionalFeaturesList(), headerData.hasWritingprogram() ? headerData.getWritingprogram() : null, headerData.hasSource() ? headerData.getSource() : null);
+
+            log.debug("Header: {}", header);
             headerCb.accept(header);
         }
 
@@ -124,7 +120,7 @@ public final class OSMHeaderReader extends OSMReader {
                     headerData.getBbox().getTop() / NANO,
                     headerData.getBbox().getRight() / NANO,
                     headerData.getBbox().getBottom() / NANO);
-            log.debug("Bounding box: {}", bbox.toString());
+            log.debug("Bounding box: {}", bbox);
             boundBoxCb.accept(bbox);
         }
     }

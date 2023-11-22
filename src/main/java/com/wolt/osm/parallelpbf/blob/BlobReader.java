@@ -39,12 +39,12 @@ public final class BlobReader {
     private static final int SIZE_FIELD_LENGTH = 4;
 
     /**
-     * BlobHeader is never bigger then 64K.
+     * BlobHeader is never bigger than 64K.
      */
     private static final int MAX_HEADER_SIZE = 64 * 1024;
 
     /**
-     * Blob is never bigger then 32M.
+     * Blob is never bigger than 32M.
      */
     private static final int MAX_BLOB_SIZE = 32 * 1024 * 1024;
 
@@ -60,7 +60,7 @@ public final class BlobReader {
      *         in case of EOF or IOException.
      */
     private Optional<byte[]> readFromStream(final int bytesToRead) {
-        byte[] buffer = new byte[bytesToRead];
+        final byte[] buffer = new byte[bytesToRead];
         try {
             int bytesRead = input.read(buffer);
             if (bytesRead != bytesToRead) {
@@ -122,7 +122,7 @@ public final class BlobReader {
             }
         });
         return result.flatMap(value -> {
-            if (value.getSize() > MAX_BLOB_SIZE) {
+            if (value.size() > MAX_BLOB_SIZE) {
                 log.warn("Blob size is too big: {}", value);
                 return Optional.empty();
             } else {

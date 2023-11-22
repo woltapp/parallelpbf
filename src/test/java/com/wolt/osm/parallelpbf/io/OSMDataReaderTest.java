@@ -24,7 +24,6 @@ import com.wolt.osm.parallelpbf.TestObjectsFactory;
 import com.google.protobuf.ByteString;
 import crosby.binary.Fileformat;
 import crosby.binary.Osmformat;
-import lombok.var;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -36,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class OSMDataReaderTest {
     private Semaphore limiter;
 
-    private Osmformat.PrimitiveGroup primitiveGroupMessage = Osmformat.PrimitiveGroup.newBuilder()
+    private final Osmformat.PrimitiveGroup primitiveGroupMessage = Osmformat.PrimitiveGroup.newBuilder()
             .addNodes(TestObjectsFactory.nodeMessage)
             .setDense(TestObjectsFactory.denseNodesMessage)
             .addWays(TestObjectsFactory.wayMessage)
@@ -44,7 +43,7 @@ class OSMDataReaderTest {
             .addChangesets(TestObjectsFactory.changesetMessage)
             .build();
 
-    private Osmformat.PrimitiveBlock primitivesMessage = Osmformat.PrimitiveBlock.newBuilder()
+    private final Osmformat.PrimitiveBlock primitivesMessage = Osmformat.PrimitiveBlock.newBuilder()
             .addPrimitivegroup(primitiveGroupMessage)
             .setStringtable(TestObjectsFactory.stringTable)
             .setGranularity(1)
@@ -53,7 +52,7 @@ class OSMDataReaderTest {
             .setLonOffset(0)
             .build();
 
-    private byte[] blob = Fileformat.Blob.newBuilder().setRaw(primitivesMessage.toByteString()).build().toByteArray();
+    private final byte[] blob = Fileformat.Blob.newBuilder().setRaw(primitivesMessage.toByteString()).build().toByteArray();
 
     @BeforeEach
     void setUp() {

@@ -15,7 +15,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  * Parallel OSM PBF format writer.
  * <p>
- * See https://github.com/woltapp/parallelpbf for the details and usage example.
+ * See <a href="https://github.com/woltapp/parallelpbf">...</a> for the details and usage example.
  */
 @Slf4j
 public class ParallelBinaryWriter implements Closeable {

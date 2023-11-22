@@ -7,7 +7,7 @@ import crosby.binary.Osmformat;
 /**
  * Encodes for Relation structure. Keeps data for the next blob
  * production in RAM and form byte[] blob in request.
- *
+ * <p>
  * Encoder is stateful and can't be used after 'write' call is issued.
  * Encoder is not thread-safe.
  */
@@ -33,7 +33,7 @@ public final class RelationEncoder extends OsmEntityEncoder<Relation> {
     /**
      * Ways builder.
      */
-    private Osmformat.PrimitiveGroup.Builder relations = Osmformat.PrimitiveGroup.newBuilder();
+    private final Osmformat.PrimitiveGroup.Builder relations = Osmformat.PrimitiveGroup.newBuilder();
 
     /**
      * Block-wide string table encoder.
@@ -61,21 +61,21 @@ public final class RelationEncoder extends OsmEntityEncoder<Relation> {
         tagsLength = tagsLength + r.getTags().size() * MEMBER_ENTRY_SIZE;
 
         Osmformat.Info info = r.getInfo() != null ? Osmformat.Info.newBuilder()
-                .setUserSid(stringEncoder.getStringIndex(r.getInfo().getUsername()))
-                .setVisible(r.getInfo().isVisible())
-                .setUid(r.getInfo().getUid())
-                .setVersion(r.getInfo().getVersion())
-                .setTimestamp(r.getInfo().getTimestamp())
-                .setChangeset(r.getInfo().getChangeset())
+                .setUserSid(stringEncoder.getStringIndex(r.getInfo().username()))
+                .setVisible(r.getInfo().visible())
+                .setUid(r.getInfo().uid())
+                .setVersion(r.getInfo().version())
+                .setTimestamp(r.getInfo().timestamp())
+                .setChangeset(r.getInfo().changeset())
                 .build() : Osmformat.Info.getDefaultInstance();
         relation.setInfo(info);
 
         long member = 0;
         for (RelationMember rm : r.getMembers()) {
-            relation.addRolesSid(stringEncoder.getStringIndex(rm.getRole()));
-            relation.addMemids(rm.getId() - member);
-            member = rm.getId();
-            relation.addTypes(Osmformat.Relation.MemberType.valueOf(rm.getType().ordinal()));
+            relation.addRolesSid(stringEncoder.getStringIndex(rm.role()));
+            relation.addMemids(rm.id() - member);
+            member = rm.id();
+            relation.addTypes(Osmformat.Relation.MemberType.forNumber(rm.type().ordinal()));
         }
         membersLength = membersLength + r.getMembers().size() * RELATION_ENTRY_SIZE;
 

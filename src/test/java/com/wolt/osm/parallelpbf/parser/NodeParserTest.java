@@ -20,7 +20,6 @@ package com.wolt.osm.parallelpbf.parser;
 import com.wolt.osm.parallelpbf.entity.Node;
 import com.wolt.osm.parallelpbf.TestObjectsFactory;
 import crosby.binary.Osmformat;
-import lombok.var;
 import org.junit.jupiter.api.Test;
 
 import java.util.function.Consumer;

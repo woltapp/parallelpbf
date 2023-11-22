@@ -18,7 +18,6 @@
 package com.wolt.osm.parallelpbf.blob;
 
 import crosby.binary.Fileformat;
-import lombok.var;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -42,8 +41,8 @@ class ReadHeaderTest {
         var actual = testedObject.readBlobHeader(testHeader.getSerializedSize());
 
         assertTrue(actual.isPresent());
-        assertEquals(testHeader.getType(), actual.get().getType());
-        assertEquals(testHeader.getDatasize(), actual.get().getSize().intValue());
+        assertEquals(testHeader.getType(), actual.get().type());
+        assertEquals(testHeader.getDatasize(), actual.get().size().intValue());
     }
 
     @Test

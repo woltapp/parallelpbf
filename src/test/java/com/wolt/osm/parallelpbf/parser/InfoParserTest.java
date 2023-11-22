@@ -19,7 +19,6 @@ package com.wolt.osm.parallelpbf.parser;
 
 import com.wolt.osm.parallelpbf.TestObjectsFactory;
 import crosby.binary.Osmformat;
-import lombok.var;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;

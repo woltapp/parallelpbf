@@ -40,7 +40,7 @@ class OSMWriterTest {
 
     private static class FakeEntity extends OsmEntity {
         public FakeEntity(long id) {
-            super(id);
+            super(id, null, null);
         }
     }
 

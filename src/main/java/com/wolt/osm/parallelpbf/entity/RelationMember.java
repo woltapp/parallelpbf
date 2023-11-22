@@ -22,13 +22,16 @@ import lombok.Data;
 /**
  * Single relation participant.
  *
+ * @param id   Id of referenced entity.
+ * @param role Role of the referenced entity in the relation.
+ *             Can be null.
+ * @param type Type of the referencing entity.
  * @see Relation
  */
-@Data
-public final class RelationMember {
+public record RelationMember(Long id, String role, com.wolt.osm.parallelpbf.entity.RelationMember.Type type) {
     /**
      * Defines relation member types.
-     *
+     * <p>
      * The values of the enum participants are linked to
      * the underlying protobuf definitions.
      */
@@ -61,8 +64,8 @@ public final class RelationMember {
 
         /**
          * Constructor for enum entry value.
-         * @param v Protobuf relation member id.
          *
+         * @param v Protobuf relation member id.
          * @see crosby.binary.Osmformat.Relation.MemberType
          */
         Type(final int v) {
@@ -71,6 +74,7 @@ public final class RelationMember {
 
         /**
          * Finds proper enum entry by protobuf MemberType value.
+         *
          * @param v Protobuf relation member id.
          * @return Matching enum entry.
          * @throws IllegalArgumentException in case of unknown member id.
@@ -85,21 +89,4 @@ public final class RelationMember {
         }
     }
 
-    /**
-     * Id of referenced entity.
-     */
-    private final Long id;
-
-    /**
-     * Role of the referenced entity in the relation.
-     * Can be null.
-     */
-    private final String role;
-
-    /**
-     * Type of the referencing entity.
-     *
-     * @see RelationMember.Type
-     */
-    private final Type type;
 }

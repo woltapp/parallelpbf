@@ -2,13 +2,14 @@ package com.wolt.osm.parallelpbf.encoder;
 
 import com.google.protobuf.ByteString;
 import crosby.binary.Osmformat;
+import lombok.Getter;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Encodes StringTable for the whole blob.
- *
+ * <p>
  * Encoder is stateful and shouldn't be used after 'getStrings' call is issued.
  * Encoder is not thread-safe.
  */
@@ -27,12 +28,16 @@ public class StringTableEncoder {
      * Reverse index mapping - for string already stored in the table it will map
      * string values back to their indices.
      */
-    private Map<String, Integer> indexMap = new HashMap<>();
+    private final Map<String, Integer> indexMap = new HashMap<>();
 
     /**
      * The string table.
+     * -- GETTER --
+     *  String table accessor.
+     *
      */
-    private Osmformat.StringTable.Builder strings = Osmformat.StringTable.newBuilder();
+    @Getter
+    private final Osmformat.StringTable.Builder strings = Osmformat.StringTable.newBuilder();
 
     /**
      * Adds string to the string table and adds string size to the stringtable size.
@@ -50,14 +55,6 @@ public class StringTableEncoder {
      */
     public StringTableEncoder() {
         strings.addS(ByteString.EMPTY); //First entry with index 0 is always empty.
-    }
-
-    /**
-     * String table accessor.
-     * @return string table value.
-     */
-    public Osmformat.StringTable.Builder getStrings() {
-        return strings;
     }
 
     /**

@@ -22,7 +22,7 @@ import java.util.zip.Deflater;
 @Slf4j
 public class BlobWriter {
     /**
-     * Size of a int, prepending the HeaderBlock.
+     * Size of an int, prepending the HeaderBlock.
      */
     private static final int INT_SIZE = 4;
     /**

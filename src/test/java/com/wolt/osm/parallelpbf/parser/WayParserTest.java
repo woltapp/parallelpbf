@@ -19,7 +19,6 @@ package com.wolt.osm.parallelpbf.parser;
 
 import com.wolt.osm.parallelpbf.entity.Way;
 import com.wolt.osm.parallelpbf.TestObjectsFactory;
-import lombok.var;
 import org.junit.jupiter.api.Test;
 
 import java.util.function.Consumer;

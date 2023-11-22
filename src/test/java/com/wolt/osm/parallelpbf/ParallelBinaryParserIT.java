@@ -107,11 +107,11 @@ class ParallelBinaryParserIT {
         assertTrue(taggedNode.getTags().containsKey("highway"));
         assertEquals("bus_stop", taggedNode.getTags().get("highway"));
 
-        assertEquals("NaPTAN", taggedNode.getInfo().getUsername());
-        assertEquals(1, taggedNode.getInfo().getVersion());
-        assertEquals(2539009, taggedNode.getInfo().getChangeset());
-        assertEquals(104459, taggedNode.getInfo().getUid());
-        assertEquals(1253397762000L, taggedNode.getInfo().getTimestamp());
+        assertEquals("NaPTAN", taggedNode.getInfo().username());
+        assertEquals(1, taggedNode.getInfo().version());
+        assertEquals(2539009, taggedNode.getInfo().changeset());
+        assertEquals(104459, taggedNode.getInfo().uid());
+        assertEquals(1253397762000L, taggedNode.getInfo().timestamp());
     }
 
     private void testWay() {
@@ -121,16 +121,16 @@ class ParallelBinaryParserIT {
         assertEquals("footway", taggedWay.getTags().get("highway"));
     }
 
-    public void testRelation() {
-        Optional<RelationMember> member = taggedRelation.getMembers().stream().filter(m -> m.getId() == 25896432).findAny();
+    private void testRelation() {
+        Optional<RelationMember> member = taggedRelation.getMembers().stream().filter(m -> m.id() == 25896432).findAny();
         assertTrue(member.isPresent());
-        assertEquals("forward", member.get().getRole());
-        Assertions.assertEquals(RelationMember.Type.WAY, member.get().getType());
+        assertEquals("forward", member.get().role());
+        Assertions.assertEquals(RelationMember.Type.WAY, member.get().type());
         assertFalse(taggedRelation.getTags().isEmpty());
         assertTrue(taggedRelation.getTags().containsKey("route"));
         assertEquals("bicycle", taggedRelation.getTags().get("route"));
         assertNotNull(taggedRelation.getInfo());
-        assertEquals("Mauls", taggedRelation.getInfo().getUsername());
+        assertEquals("Mauls", taggedRelation.getInfo().username());
     }
 
     @Test
@@ -140,36 +140,36 @@ class ParallelBinaryParserIT {
         parse(input);
 
         testSimpleNode();
-        assertEquals(234999, simpleNode.getInfo().getUid());
-        assertEquals("Nicholas Shanks", simpleNode.getInfo().getUsername());
-        assertEquals(1, simpleNode.getInfo().getVersion());
-        assertEquals(1267144226000L, simpleNode.getInfo().getTimestamp());
-        assertEquals(3977001, simpleNode.getInfo().getChangeset());
-        assertTrue(simpleNode.getInfo().isVisible());
+        assertEquals(234999, simpleNode.getInfo().uid());
+        assertEquals("Nicholas Shanks", simpleNode.getInfo().username());
+        assertEquals(1, simpleNode.getInfo().version());
+        assertEquals(1267144226000L, simpleNode.getInfo().timestamp());
+        assertEquals(3977001, simpleNode.getInfo().changeset());
+        assertTrue(simpleNode.getInfo().visible());
 
         testTaggedNode();
-        assertEquals(104459, taggedNode.getInfo().getUid());
-        assertEquals("NaPTAN", taggedNode.getInfo().getUsername());
-        assertEquals(1, taggedNode.getInfo().getVersion());
-        assertEquals(1253397762000L, taggedNode.getInfo().getTimestamp());
-        assertEquals(2539009, taggedNode.getInfo().getChangeset());
-        assertTrue(taggedNode.getInfo().isVisible());
+        assertEquals(104459, taggedNode.getInfo().uid());
+        assertEquals("NaPTAN", taggedNode.getInfo().username());
+        assertEquals(1, taggedNode.getInfo().version());
+        assertEquals(1253397762000L, taggedNode.getInfo().timestamp());
+        assertEquals(2539009, taggedNode.getInfo().changeset());
+        assertTrue(taggedNode.getInfo().visible());
 
         testWay();
-        assertEquals(470302, taggedWay.getInfo().getUid());
-        assertEquals("Kjc", taggedWay.getInfo().getUsername());
-        assertEquals(1, taggedWay.getInfo().getVersion());
-        assertEquals(1334007464L, taggedWay.getInfo().getTimestamp());
-        assertEquals(11245909, taggedWay.getInfo().getChangeset());
-        assertTrue(taggedWay.getInfo().isVisible());
+        assertEquals(470302, taggedWay.getInfo().uid());
+        assertEquals("Kjc", taggedWay.getInfo().username());
+        assertEquals(1, taggedWay.getInfo().version());
+        assertEquals(1334007464L, taggedWay.getInfo().timestamp());
+        assertEquals(11245909, taggedWay.getInfo().changeset());
+        assertTrue(taggedWay.getInfo().visible());
 
         testRelation();
-        assertEquals(24119, taggedRelation.getInfo().getUid());
-        assertEquals("Mauls", taggedRelation.getInfo().getUsername());
-        assertEquals(81, taggedRelation.getInfo().getVersion());
-        assertEquals(1337419064L, taggedRelation.getInfo().getTimestamp());
-        assertEquals(11640673, taggedRelation.getInfo().getChangeset());
-        assertTrue(taggedRelation.getInfo().isVisible());
+        assertEquals(24119, taggedRelation.getInfo().uid());
+        assertEquals("Mauls", taggedRelation.getInfo().username());
+        assertEquals(81, taggedRelation.getInfo().version());
+        assertEquals(1337419064L, taggedRelation.getInfo().timestamp());
+        assertEquals(11640673, taggedRelation.getInfo().changeset());
+        assertTrue(taggedRelation.getInfo().visible());
     }
 
     @Test

@@ -6,8 +6,8 @@ import crosby.binary.Osmformat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DenseNodesEncoderTest {
     private StringTableEncoder stringEncoder;
@@ -73,11 +73,11 @@ class DenseNodesEncoderTest {
 
     @Test
     public void testDeltaCoding() {
-        Node node1 = new Node(3, 20.0, 60.0);
+        Node node1 = new Node(3, null, new HashMap<>(), 20.0, 60.0);
         node1.getTags().put(TestObjectsFactory.testTag, TestObjectsFactory.testTag);
-        Node node2 = new Node(6, 30.0, 20.0);
+        Node node2 = new Node(6, null, new HashMap<>(),30.0, 20.0);
         node2.getTags().put(TestObjectsFactory.testTag, TestObjectsFactory.testTag);
-        Node node3 = new Node(2, 60.0, 30.0);
+        Node node3 = new Node(2, null, new HashMap<>(),60.0, 30.0);
         node3.getTags().put(TestObjectsFactory.testTag, TestObjectsFactory.testTag);
 
         DenseNodesEncoder testedObject = new DenseNodesEncoder(stringEncoder);

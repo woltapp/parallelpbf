@@ -20,7 +20,6 @@ package com.wolt.osm.parallelpbf.parser;
 import com.wolt.osm.parallelpbf.TestObjectsFactory;
 import com.wolt.osm.parallelpbf.entity.Relation;
 import com.wolt.osm.parallelpbf.entity.RelationMember;
-import lombok.var;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -38,11 +37,11 @@ class RelationParserTest {
         assertEquals("value", tags.get("tag"));
 
         var actualMember = relation.getMembers().get(0);
-        assertEquals(9000, actualMember.getId().longValue());
-        Assertions.assertEquals(RelationMember.Type.NODE, actualMember.getType());
-        assertEquals("fail", actualMember.getRole());
+        assertEquals(9000, actualMember.id().longValue());
+        Assertions.assertEquals(RelationMember.Type.NODE, actualMember.type());
+        assertEquals("fail", actualMember.role());
         assertNotNull(relation.getInfo());
-        assertEquals("test", relation.getInfo().getUsername());
+        assertEquals("test", relation.getInfo().username());
     };
 
     @Test

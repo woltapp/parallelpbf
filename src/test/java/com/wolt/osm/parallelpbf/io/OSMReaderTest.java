@@ -19,7 +19,6 @@ package com.wolt.osm.parallelpbf.io;
 
 import com.google.protobuf.ByteString;
 import crosby.binary.Fileformat;
-import lombok.var;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

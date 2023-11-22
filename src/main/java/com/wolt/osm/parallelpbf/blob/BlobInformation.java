@@ -17,15 +17,15 @@
 
 package com.wolt.osm.parallelpbf.blob;
 
-import lombok.Data;
-
 /**
  * A better wrapper over BlobHeader.
- *
+ * <p>
  * Keeps blob size and blob type together for future processing.
+ *
+ * @param size Data blob size.
+ * @param type Data blob type.
  */
-@Data
-public class BlobInformation {
+public record BlobInformation(Integer size, String type) {
     /* OSM PBF Fileformat block types. See https://wiki.openstreetmap.org/wiki/PBF_Format for the details */
     /**
      * OSMData type block.
@@ -35,13 +35,4 @@ public class BlobInformation {
      * OSMHeader type block.
      */
     public static final String TYPE_OSM_HEADER = "OSMHeader";
-    /**
-     * Data blob size.
-     */
-    private final Integer size;
-
-    /**
-     * Data blob type.
-     */
-    private final String type;
 }

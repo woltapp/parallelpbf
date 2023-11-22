@@ -17,7 +17,6 @@
 
 package com.wolt.osm.parallelpbf.blob;
 
-import lombok.var;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;

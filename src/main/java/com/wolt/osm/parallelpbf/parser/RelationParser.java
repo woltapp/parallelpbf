@@ -21,7 +21,6 @@ import com.wolt.osm.parallelpbf.entity.Relation;
 import com.wolt.osm.parallelpbf.entity.RelationMember;
 import crosby.binary.Osmformat;
 import lombok.extern.slf4j.Slf4j;
-import lombok.var;
 
 import java.util.function.Consumer;
 
@@ -43,9 +42,7 @@ public final class RelationParser extends BaseParser<Osmformat.Relation, Consume
     @Override
     public void parse(final Osmformat.Relation message) {
         long memberId = 0;
-        var relation = new Relation(message.getId());
-        relation.setTags(parseTags(message.getKeysList(), message.getValsList()));
-        relation.setInfo(parseInfo(message));
+        var relation = new Relation(message.getId(), parseInfo(message), parseTags(message.getKeysList(), message.getValsList()));
         for (int indx = 0; indx < message.getRolesSidCount(); ++indx) {
             String role = getStringTable().getS(message.getRolesSid(indx)).toStringUtf8();
             memberId += message.getMemids(indx);

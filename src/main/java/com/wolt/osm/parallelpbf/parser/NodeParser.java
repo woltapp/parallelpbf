@@ -21,13 +21,14 @@ import com.wolt.osm.parallelpbf.entity.Info;
 import com.wolt.osm.parallelpbf.entity.Node;
 import crosby.binary.Osmformat;
 import lombok.extern.slf4j.Slf4j;
-import lombok.var;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 /**
  * Implements OSM Way parser.
- *
+ * <p>
  * Can parse both primitive and dense nodes.
  */
 @Slf4j
@@ -43,13 +44,13 @@ public final class NodeParser extends BaseParser<Osmformat.Node, Consumer<Node>>
     private final int granularity;
 
     /**
-     * Offset value between the output coordinates coordinates and the granularity grid, in units of nanodegrees.
+     * Offset value between the output coordinates and the granularity grid, in units of nanodegrees.
      * Latitude part.
      */
     private final long latOffset;
 
     /**
-     * Offset value between the output coordinates coordinates and the granularity grid, in units of nanodegrees.
+     * Offset value between the output coordinates and the granularity grid, in units of nanodegrees.
      * Longitude part.
      */
     private final long lonOffset;
@@ -85,9 +86,7 @@ public final class NodeParser extends BaseParser<Osmformat.Node, Consumer<Node>>
     public void parse(final Osmformat.Node message) {
         double latitude = NANO * (latOffset + (granularity * message.getLat()));
         double longitude = NANO * (lonOffset + (granularity * message.getLon()));
-        Node node = new Node(message.getId(), latitude, longitude);
-        node.setTags(parseTags(message.getKeysList(), message.getValsList()));
-        node.setInfo(parseInfo(message));
+        Node node = new Node(message.getId(), parseInfo(message), parseTags(message.getKeysList(), message.getValsList()), latitude, longitude);
         if (log.isDebugEnabled()) {
             log.debug(node.toString());
         }
@@ -113,8 +112,10 @@ public final class NodeParser extends BaseParser<Osmformat.Node, Consumer<Node>>
             latitude += NANO * (latOffset + (granularity * nodes.getLat(indx)));
             longitude += NANO * (lonOffset + (granularity * nodes.getLon(indx)));
 
-            Node node = new Node(id, latitude, longitude);
+
+            Map <String, String> tags;
             if (nodes.getKeysValsCount() > 0) {
+                tags = new HashMap<>();
                 while (true) {
                     int keyIndex = nodes.getKeysVals(tagsKeyValuePointer);
                     ++tagsKeyValuePointer;
@@ -125,9 +126,12 @@ public final class NodeParser extends BaseParser<Osmformat.Node, Consumer<Node>>
                     ++tagsKeyValuePointer;
                     String key = getStringTable().getS(keyIndex).toStringUtf8();
                     String value = getStringTable().getS(valueIndex).toStringUtf8();
-                    node.getTags().put(key, value);
+                    tags.put(key, value);
                 }
+            } else {
+                tags = null;
             }
+            final Info info;
             if (nodes.hasDenseinfo()) {
                 var infoMessage = nodes.getDenseinfo();
                 uid += infoMessage.getUid(indx);
@@ -142,9 +146,14 @@ public final class NodeParser extends BaseParser<Osmformat.Node, Consumer<Node>>
                 } else {
                     visible = true;
                 }
-                Info info = new Info(uid, username, version, timestamp * dateGranularity, changeset, visible);
-                node.setInfo(info);
+                 info = new Info(uid, username, version, timestamp * dateGranularity, changeset, visible);
+
+            } else {
+                info = null;
             }
+
+            Node node = new Node(id, info, tags, latitude, longitude);
+
             if (log.isDebugEnabled()) {
                 log.debug(node.toString());
             }

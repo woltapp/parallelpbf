@@ -41,9 +41,7 @@ public final class WayParser extends BaseParser<Osmformat.Way, Consumer<Way>> {
     @Override
     public void parse(final Osmformat.Way message) {
         long nodeId = 0;
-        Way way = new Way(message.getId());
-        way.setTags(parseTags(message.getKeysList(), message.getValsList()));
-        way.setInfo(parseInfo(message));
+        Way way = new Way(message.getId(), parseInfo(message),parseTags(message.getKeysList(), message.getValsList()) );
         for (Long node : message.getRefsList()) {
             nodeId += node;
             way.getNodes().add(nodeId);

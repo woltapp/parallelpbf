@@ -25,7 +25,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 @Slf4j
 public final class OSMWriter implements Runnable {
     /**
-     * Blob should not be bigger then 16M, but we limit to
+     * Blob should not be bigger than 16M, but we limit to
      * 15M for a safety, as we do estimate size approximately.
      */
     private static final int LIMIT_BLOB_SIZE = 15 * 1024 * 1024;

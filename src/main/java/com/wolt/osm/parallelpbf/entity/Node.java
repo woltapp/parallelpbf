@@ -17,38 +17,40 @@
 
 package com.wolt.osm.parallelpbf.entity;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.ToString;
+import java.util.Map;
 
 /**
  * OSM Node entity.
- *
+ * <p>
  * Node is a most basic building block of the OSM database.
  */
-@Data
+@Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public final class Node extends OsmEntity {
-    /**
-     * Constructs Node setting mandatory fields.
-     * @param id Required node id.
-     * @param latitude Node latitude.
-     * @param longitude Node longitude
-     */
-    public Node(final long id, final double latitude, final double longitude) {
-        super(id);
-        this.lat = latitude;
-        this.lon = longitude;
-    }
+  /**
+   * Constructs Node setting mandatory fields.
+   *
+   * @param id        Required node id.
+   * @param latitude  Node latitude.
+   * @param longitude Node longitude
+   */
+  public Node(long id, Info info, Map<String, String> tags, double latitude, double longitude) {
+    super(id, tags, info);
+    this.lat = latitude;
+    this.lon = longitude;
+  }
 
-    /**
-     * Node latitude.
-     */
-    private final double lat;
+  /**
+   * Node latitude.
+   */
+  private final double lat;
 
-    /**
-     * Node longitude.
-     */
-    private final double lon;
+  /**
+   * Node longitude.
+   */
+  private final double lon;
 }

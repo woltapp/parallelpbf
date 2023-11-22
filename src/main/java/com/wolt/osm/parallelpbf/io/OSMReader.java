@@ -29,7 +29,7 @@ import java.util.zip.Inflater;
  * Base class for Blob handlers.
  * Provides blob decompression and runs proper decoder on a
  * raw blob.
- *
+ * <p>
  * This class have no shared context, thus can be safely
  * executed on parallel.
  */
@@ -43,7 +43,7 @@ public abstract class OSMReader implements Runnable {
     /**
      * Part of throttling system.
      * Reader takes the semaphore while running
-     * and releases on completion. Therefore caller
+     * and releases on completion. Therefore, caller
      * may wait for some number of semaphores to be available and
      * do not overload thread pool.
      */

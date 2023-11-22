@@ -15,10 +15,10 @@ public final class OsmHeaderEncoder extends OsmEncoder {
      */
     private static Osmformat.HeaderBBox encodeBoundBox(final BoundBox boundBox) {
         return Osmformat.HeaderBBox.newBuilder()
-                .setLeft(doubleToNanoScaled(boundBox.getLeft()))
-                .setTop(doubleToNanoScaled(boundBox.getTop()))
-                .setRight(doubleToNanoScaled(boundBox.getRight()))
-                .setBottom(doubleToNanoScaled(boundBox.getBottom()))
+                .setLeft(doubleToNanoScaled(boundBox.left()))
+                .setTop(doubleToNanoScaled(boundBox.top()))
+                .setRight(doubleToNanoScaled(boundBox.right()))
+                .setBottom(doubleToNanoScaled(boundBox.bottom()))
                 .build();
     }
 

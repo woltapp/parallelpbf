@@ -17,35 +17,36 @@
 
 package com.wolt.osm.parallelpbf.entity;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.ToString;
-
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * OSM Relation entity.
- *
+ * <p>
  * Groups several OSM entities (including other relations)
  * to the single logical entity.
  *
  * @see RelationMember
  */
-@Data
+@Getter
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public final class Relation extends OsmEntity {
-    /**
-     * Entity constructor.
-     * @param id Sets required object id during construction.
-     */
-    public Relation(final long id) {
-        super(id);
-    }
+  /**
+   * Entity constructor.
+   *
+   * @param id Sets required object id during construction.
+   */
+  public Relation(long id, Info info, Map<String, String> tags) {
+    super(id, tags, info);
+  }
 
-    /**
-     * Ordered list of relation members. Can be empty.
-     */
-    private final List<RelationMember> members = new LinkedList<>();
+  /**
+   * Ordered list of relation members. Can be empty.
+   */
+  private final List<RelationMember> members = new LinkedList<>();
 }

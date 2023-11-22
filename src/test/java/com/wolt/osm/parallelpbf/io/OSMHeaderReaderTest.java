@@ -22,7 +22,6 @@ import com.wolt.osm.parallelpbf.entity.Header;
 import com.google.protobuf.ByteString;
 import crosby.binary.Fileformat;
 import crosby.binary.Osmformat;
-import lombok.var;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -70,10 +69,10 @@ class OSMHeaderReaderTest {
         var blob = Fileformat.Blob.newBuilder().setRaw(ByteString.copyFrom(headerMessage)).build().toByteArray();
 
         Consumer<Header> checker = (header) -> {
-          assertEquals("DenseNodes", header.getRequiredFeatures().get(0));
-          assertEquals("test_feature", header.getOptionalFeatures().get(0));
-          assertEquals("test", header.getSource());
-          assertEquals("junit5", header.getWritingProgram());
+          assertEquals("DenseNodes", header.requiredFeatures().get(0));
+          assertEquals("test_feature", header.optionalFeatures().get(0));
+          assertEquals("test", header.source());
+          assertEquals("junit5", header.writingProgram());
         };
         var testedObject = new OSMHeaderReader(blob, limiter, checker, null);
         testedObject.run();
@@ -105,10 +104,10 @@ class OSMHeaderReaderTest {
         var blob = Fileformat.Blob.newBuilder().setRaw(ByteString.copyFrom(headerMessage)).build().toByteArray();
 
         Consumer<BoundBox> checker = (bbox) -> {
-            assertEquals(1, bbox.getLeft(), 0.1);
-            assertEquals(2, bbox.getTop(), 0.1);
-            assertEquals(3, bbox.getRight(), 0.1);
-            assertEquals(4, bbox.getBottom(), 0.1);
+            assertEquals(1, bbox.left(), 0.1);
+            assertEquals(2, bbox.top(), 0.1);
+            assertEquals(3, bbox.right(), 0.1);
+            assertEquals(4, bbox.bottom(), 0.1);
         };
         var testedObject = new OSMHeaderReader(blob, limiter, null, checker);
         testedObject.run();

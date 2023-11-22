@@ -17,30 +17,14 @@
 
 package com.wolt.osm.parallelpbf.entity;
 
-import lombok.Data;
-
 /**
  * Wrapper of the bounding box of the map parsed.
+ *
+ * @param left   Lesser longitude of a bounding box.
+ * @param top    Lesser latitude of a bounding box.
+ * @param right  Bigger longitude of a bounding box.
+ * @param bottom Bigger latitude of a bounding gox.
  */
-@Data
-public final class BoundBox {
-    /**
-     * Lesser longitude of a bounding box.
-     */
-    private final double left;
 
-    /**
-     * Lesser latitude of a bounding box.
-     */
-    private final double top;
-
-    /**
-     * Bigger longitude of a bounding box.
-     */
-    private final double right;
-
-    /**
-     * Bigger latitude of a bounding gox.
-     */
-    private final double bottom;
+public record BoundBox(double left, double top, double right, double bottom) {
 }
