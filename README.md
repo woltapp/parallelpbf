@@ -19,9 +19,9 @@ is to distribute the work on all the cores. And here we go...
 
 ```xml
 <dependency>
-    <groupId>com.wolt.osm</groupId>
+    <groupId>com.hcspak.osm</groupId>
     <artifactId>parallelpbf</artifactId>
-    <version>0.3.1</version>
+    <version>0.4.0</version>
 </dependency>
 ```
         
