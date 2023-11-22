@@ -26,13 +26,13 @@ package com.wolt.osm.parallelpbf.blob;
  * @param type Data blob type.
  */
 public record BlobInformation(Integer size, String type) {
-    /* OSM PBF Fileformat block types. See https://wiki.openstreetmap.org/wiki/PBF_Format for the details */
-    /**
-     * OSMData type block.
-     */
-    public static final String TYPE_OSM_DATA = "OSMData";
-    /**
-     * OSMHeader type block.
-     */
-    public static final String TYPE_OSM_HEADER = "OSMHeader";
+  /* OSM PBF Fileformat block types. See https://wiki.openstreetmap.org/wiki/PBF_Format for the details */
+  /**
+   * OSMData type block.
+   */
+  public static final String TYPE_OSM_DATA = "OSMData";
+  /**
+   * OSMHeader type block.
+   */
+  public static final String TYPE_OSM_HEADER = "OSMHeader";
 }

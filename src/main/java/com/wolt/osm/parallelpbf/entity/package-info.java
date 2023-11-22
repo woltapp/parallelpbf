@@ -20,4 +20,5 @@
  * that will be extracted from the PBF file for the future
  * processing.
  */
+
 package com.wolt.osm.parallelpbf.entity;

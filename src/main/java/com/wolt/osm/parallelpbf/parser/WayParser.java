@@ -20,35 +20,34 @@ package com.wolt.osm.parallelpbf.parser;
 import com.wolt.osm.parallelpbf.entity.Way;
 import crosby.binary.Osmformat;
 import lombok.extern.slf4j.Slf4j;
-
 import java.util.function.Consumer;
 
 /**
  * Implements OSM Way parser.
- *
  */
 @Slf4j
 public final class WayParser extends BaseParser<Osmformat.Way, Consumer<Way>> {
-    /**
-     * Parent compatible constructor that sets callback and string table.
-     * @param callback Callback to call on successful parse.
-     * @param stringTable String table to use while parsing.
-     */
-    public WayParser(final Consumer<Way> callback, final Osmformat.StringTable stringTable) {
-        super(callback, stringTable);
-    }
+  /**
+   * Parent compatible constructor that sets callback and string table.
+   *
+   * @param callback    Callback to call on successful parse.
+   * @param stringTable String table to use while parsing.
+   */
+  public WayParser(final Consumer<Way> callback, final Osmformat.StringTable stringTable) {
+    super(callback, stringTable);
+  }
 
-    @Override
-    public void parse(final Osmformat.Way message) {
-        long nodeId = 0;
-        Way way = new Way(message.getId(), parseInfo(message),parseTags(message.getKeysList(), message.getValsList()) );
-        for (Long node : message.getRefsList()) {
-            nodeId += node;
-            way.getNodes().add(nodeId);
-        }
-        if (log.isDebugEnabled()) {
-            log.debug(way.toString());
-        }
-        getCallback().accept(way);
+  @Override
+  public void parse(final Osmformat.Way message) {
+    long nodeId = 0;
+    Way way = new Way(message.getId(), parseInfo(message), parseTags(message.getKeysList(), message.getValsList()));
+    for (Long node : message.getRefsList()) {
+      nodeId += node;
+      way.getNodes().add(nodeId);
     }
+    if (log.isDebugEnabled()) {
+      log.debug(way.toString());
+    }
+    getCallback().accept(way);
+  }
 }

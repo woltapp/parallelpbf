@@ -20,7 +20,6 @@ package com.wolt.osm.parallelpbf.entity;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -36,18 +35,19 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public final class Way extends OsmEntity {
-    /**
-     * Constructs Way setting mandatory fields.
-     * @param id Required object id.
-     */
-    public Way(long id, Info info, Map<String, String> tags) {
-        super(id, tags, info);
-    }
+  /**
+   * Constructs Way setting mandatory fields.
+   *
+   * @param id Required object id.
+   */
+  public Way(long id, Info info, Map<String, String> tags) {
+    super(id, tags, info);
+  }
 
-    /**
-     * Ordered list of nodes, making way. Should contain at least one node.
-     *
-     * @see Node
-     */
-    private final List<Long> nodes = new LinkedList<>();
+  /**
+   * Ordered list of nodes, making way. Should contain at least one node.
+   *
+   * @see Node
+   */
+  private final List<Long> nodes = new LinkedList<>();
 }

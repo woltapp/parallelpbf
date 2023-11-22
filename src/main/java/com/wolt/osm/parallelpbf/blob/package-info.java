@@ -18,4 +18,5 @@
 /**
  * BlobHeader, Blob and stream reading operations.
  */
+
 package com.wolt.osm.parallelpbf.blob;

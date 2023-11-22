@@ -17,7 +17,8 @@
 
 /**
  * Parallel OSM PBF format parser.
- *
+ * <p>
  * See https://github.com/akashihi/parallelpbf for the details and usage example.
  */
+
 package com.wolt.osm.parallelpbf;

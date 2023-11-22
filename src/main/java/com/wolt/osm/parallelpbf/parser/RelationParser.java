@@ -21,39 +21,38 @@ import com.wolt.osm.parallelpbf.entity.Relation;
 import com.wolt.osm.parallelpbf.entity.RelationMember;
 import crosby.binary.Osmformat;
 import lombok.extern.slf4j.Slf4j;
-
 import java.util.function.Consumer;
 
 /**
  * Implements OSM Relation parser.
- *
  */
 @Slf4j
 public final class RelationParser extends BaseParser<Osmformat.Relation, Consumer<Relation>> {
-    /**
-     * Parent compatible constructor that sets callback and string table.
-     * @param callback Callback to call on successful parse.
-     * @param stringTable String table to use while parsing.
-     */
-    public RelationParser(final Consumer<Relation> callback, final Osmformat.StringTable stringTable) {
-        super(callback, stringTable);
+  /**
+   * Parent compatible constructor that sets callback and string table.
+   *
+   * @param callback    Callback to call on successful parse.
+   * @param stringTable String table to use while parsing.
+   */
+  public RelationParser(final Consumer<Relation> callback, final Osmformat.StringTable stringTable) {
+    super(callback, stringTable);
+  }
+
+  @Override
+  public void parse(final Osmformat.Relation message) {
+    long memberId = 0;
+    var relation = new Relation(message.getId(), parseInfo(message), parseTags(message.getKeysList(), message.getValsList()));
+    for (int indx = 0; indx < message.getRolesSidCount(); ++indx) {
+      String role = getStringTable().getS(message.getRolesSid(indx)).toStringUtf8();
+      memberId += message.getMemids(indx);
+      var type = RelationMember.Type.get(message.getTypes(indx).getNumber());
+      var member = new RelationMember(memberId, role, type);
+      relation.getMembers().add(member);
     }
 
-    @Override
-    public void parse(final Osmformat.Relation message) {
-        long memberId = 0;
-        var relation = new Relation(message.getId(), parseInfo(message), parseTags(message.getKeysList(), message.getValsList()));
-        for (int indx = 0; indx < message.getRolesSidCount(); ++indx) {
-            String role = getStringTable().getS(message.getRolesSid(indx)).toStringUtf8();
-            memberId += message.getMemids(indx);
-            var type = RelationMember.Type.get(message.getTypes(indx).getNumber());
-            var member = new RelationMember(memberId, role, type);
-            relation.getMembers().add(member);
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug(relation.toString());
-        }
-        getCallback().accept(relation);
+    if (log.isDebugEnabled()) {
+      log.debug(relation.toString());
     }
+    getCallback().accept(relation);
+  }
 }

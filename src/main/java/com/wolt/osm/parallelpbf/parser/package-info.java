@@ -18,4 +18,5 @@
 /**
  * Collection of OSM primitives parsers.
  */
+
 package com.wolt.osm.parallelpbf.parser;

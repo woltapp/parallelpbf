@@ -18,9 +18,7 @@
 package com.wolt.osm.parallelpbf.entity;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
-
-import java.util.HashMap;
+import lombok.Getter;
 import java.util.Map;
 
 /**
@@ -30,25 +28,26 @@ import java.util.Map;
  * presented as unique keys with their values.
  * <p>
  * For a PBF format we also store metadata for the entity.
+ *
  * @see Info
  */
-@Data
+@Getter
 @AllArgsConstructor
 public abstract class OsmEntity {
-    /**
-     * Entry id.
-     */
-    private final long id;
+  /**
+   * Entry id.
+   */
+  private final long id;
 
-    /**
-     * Entry tags map. May be empty.
-     */
-    private final Map<String, String> tags;
+  /**
+   * Entry tags map. May be empty.
+   */
+  private final Map<String, String> tags;
 
-    /**
-     * Entry metadata, can be null.
-     *
-     * @see Info
-     */
-    private final Info info;
+  /**
+   * Entry metadata, can be null.
+   *
+   * @see Info
+   */
+  private final Info info;
 }
